@@ -16,9 +16,8 @@ export JAVA_HOME=$(/usr/libexec/java_home)
 
 # FZF
 export FZF_DEFAULT_OPTS='
-  --color=bg+:#073642,bg:#002b36,spinner:#719e07,hl:#586e75
-  --color=fg:#839496,header:#586e75,info:#cb4b16,pointer:#719e07
-  --color=marker:#719e07,fg+:#839496,prompt:#719e07,hl+:#719e07
+    --color fg:#D8DEE9,bg:#2E3440,hl:#A3BE8C,fg+:#D8DEE9,bg+:#434C5E,hl+:#A3BE8C
+    --color pointer:#BF616A,info:#4C566A,spinner:#4C566A,header:#4C566A,prompt:#81A1C1,marker:#EBCB8B
 '
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh

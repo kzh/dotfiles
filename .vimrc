@@ -9,9 +9,6 @@ noremap <F1> <nop>
 noremap Q <nop>
 noremap K <nop>
 
-set background=dark
-colorscheme solarized
-
 let g:fzf_colors =
 \ { 'fg':      ['fg', 'Normal'],
   \ 'bg':      ['bg', 'Normal'],
@@ -52,7 +49,10 @@ Plug 'scrooloose/nerdtree', { 'on':  'NERDTreeToggle' }
 Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
 Plug 'fatih/vim-go', { 'do': ':GoUpdateBinaries' }
+Plug 'arcticicestudio/nord-vim'
 Plug 'tpope/vim-surround'
 Plug '/usr/local/opt/fzf'
 Plug 'junegunn/fzf.vim'
 call plug#end()
+
+colorscheme nord
