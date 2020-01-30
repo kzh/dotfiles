@@ -78,7 +78,7 @@ galias grt  "remote"
 galias grv  "revert"
 galias gsh  "show"
 galias gsm  "submodule"
-galias gst  "-c core.pager='less -p ^stash' stash"
+galias gst  "stash"
 galias grbc "git rebase --continue"
 
 alias ta="tmux -a"

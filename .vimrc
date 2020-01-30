@@ -23,13 +23,14 @@ let g:fzf_colors =
   \ 'marker':  ['fg', 'Keyword'],
   \ 'spinner': ['fg', 'Label'],
   \ 'header':  ['fg', 'Comment'] }
-
 let g:fzf_layout = { 'down': '~20%' }
 
 " keybinds
 map <C-n> :NERDTreeToggle<CR>
+map <C-m> :NERDTreeFind<CR>
 
 let mapleader = "\<Space>"
+nmap <Leader>t :Buffers<CR>
 nmap <Leader>o :Files<CR>
 nmap <Leader>a :Rg<CR>
 nmap <Leader>f :GoDecls<CR>
@@ -42,6 +43,8 @@ set tabstop=4 shiftwidth=4 expandtab
 filetype plugin indent on
 au FileType go set noexpandtab
 au FileType yaml setlocal ts=2 sts=2 sw=2 expandtab
+au FileType html setlocal ts=4 sts=4 sw=4 expandtab
+au FileType json setlocal ts=4 sts=4 sw=4 expandtab
 
 " vim-plug plugins
 call plug#begin('~/.vim/plugged')
