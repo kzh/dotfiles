@@ -11,6 +11,9 @@ export GOPATH="$HOME/Code/Go"
 export GOBIN="$GOPATH/bin"
 export PATH=$PATH:$(go env GOPATH)/bin
 
+# Rust
+export PATH=$PATH:$HOME/.cargo/bin
+
 # Java Home
 export JAVA_HOME=$(/usr/libexec/java_home)
 
@@ -40,6 +43,8 @@ if [ -f '/Users/kevin/GCloud/completion.zsh.inc' ]; then . '/Users/kevin/GCloud/
 
 # :D
 export EDITOR='vim'
+
+alias watch="watch -n 1 "
 
 alias v="vim"
 alias clr="clear"

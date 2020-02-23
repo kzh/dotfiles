@@ -44,7 +44,10 @@ filetype plugin indent on
 au FileType go set noexpandtab
 au FileType yaml setlocal ts=2 sts=2 sw=2 expandtab
 au FileType html setlocal ts=4 sts=4 sw=4 expandtab
-au FileType json setlocal ts=4 sts=4 sw=4 expandtab
+au FileType json setlocal ts=2 sts=2 sw=2 expandtab
+
+" disable .netrwhist
+let g:netrw_dirhistmax = 0
 
 " vim-plug plugins
 call plug#begin('~/.vim/plugged')
@@ -52,6 +55,7 @@ Plug 'scrooloose/nerdtree', { 'on':  'NERDTreeToggle' }
 Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
 Plug 'fatih/vim-go', { 'do': ':GoUpdateBinaries' }
+Plug 'rust-lang/rust.vim'
 Plug 'arcticicestudio/nord-vim'
 Plug 'tpope/vim-surround'
 Plug '/usr/local/opt/fzf'
