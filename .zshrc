@@ -46,6 +46,9 @@ export EDITOR='vim'
 
 alias watch="watch -n 1 "
 
+alias cat="bat"
+alias ls="exa"
+
 alias v="vim"
 alias clr="clear"
 alias cfg="v ~/.zshrc && source ~/.zshrc"
