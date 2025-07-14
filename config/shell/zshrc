@@ -1,0 +1,453 @@
+# Oh My Zsh Configuration
+export ZSH="/Users/kevin/.oh-my-zsh"
+ZSH_THEME="robbyrussell"
+DISABLE_UPDATE_PROMPT=true
+DISABLE_AUTO_UPDATE=true
+
+plugins=(
+  ssh-agent
+  fzf
+  git-extras
+  colored-man-pages
+  command-not-found
+  extract
+  history-substring-search
+  docker
+  kubectl
+  golang
+  rust
+  npm
+  yarn
+  pip
+  terraform
+  aws
+  gcloud
+  httpie
+  jsontools
+  web-search
+  copypath
+  copyfile
+  fast-syntax-highlighting
+  zsh-autosuggestions
+)
+
+# History Configuration
+HISTSIZE=50000
+SAVEHIST=50000
+setopt EXTENDED_HISTORY
+setopt HIST_EXPIRE_DUPS_FIRST
+setopt HIST_IGNORE_DUPS
+setopt HIST_IGNORE_SPACE
+setopt HIST_VERIFY
+setopt SHARE_HISTORY
+
+# Directory Navigation
+setopt AUTO_CD              # Type directory name to cd
+setopt AUTO_PUSHD           # Push directories to stack
+setopt PUSHD_IGNORE_DUPS    # Don't push duplicates
+setopt PUSHD_SILENT         # Don't print directory stack
+
+# Directory Shortcuts
+hash -d proj=~/Code
+hash -d conf=~/.config
+hash -d dl=~/Downloads
+hash -d docs=~/Documents
+
+# Environment Variables
+export EDITOR='nvim'
+export PULUMI_SKIP_UPDATE_CHECK=true
+export OLLAMA_HOST=ollama
+export COCKROACH_HOST=cockroachdb-public
+
+# Go
+export GOPATH="$HOME/Code/Go"
+export GOBIN="$GOPATH/bin"
+
+# FZF Configuration
+export FZF_DEFAULT_OPTS="
+	--color=fg:#797593,bg:#faf4ed,hl:#d7827e
+	--color=fg+:#575279,bg+:#f2e9e1,hl+:#d7827e
+	--color=border:#dfdad9,header:#286983,gutter:#faf4ed
+	--color=spinner:#ea9d34,info:#56949f
+	--color=pointer:#907aa9,marker:#b4637a,prompt:#797593"
+
+# Better FZF defaults for file search (if fd is available)
+if command -v fd &> /dev/null; then
+    export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
+    export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+    export FZF_ALT_C_COMMAND='fd --type d --hidden --follow --exclude .git'
+fi
+
+# PATH Configuration
+export PATH="$PATH:$GOBIN"
+export PATH="$PATH:$HOME/.cargo/bin"
+export PATH="$PATH:${KREW_ROOT:-$HOME/.krew}/bin"
+export PATH="$PATH:/Users/kevin/.lmstudio/bin"
+export PATH="$PATH:/Users/kevin/.bun/bin"
+export PATH="$PATH:/Users/kevin/.codeium/windsurf/bin"
+
+# Source Oh My Zsh
+source $ZSH/oh-my-zsh.sh
+
+# Remove autojump functions if they exist (using zoxide instead)
+unfunction autojump_chpwd 2>/dev/null || true
+
+# Enhanced Completion
+zstyle ':completion:*' menu select
+zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' 'r:|=*' 'l:|=* r:|=*'
+zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
+zstyle ':completion:*' group-name ''
+zstyle ':completion:*:descriptions' format '%F{yellow}-- %d --%f'
+zstyle ':completion:*:messages' format '%F{purple}-- %d --%f'
+zstyle ':completion:*:warnings' format '%F{red}-- no matches found --%f'
+zstyle ':completion:*:*:docker:*' option-stacking yes
+zstyle ':completion:*:*:docker-*:*' option-stacking yes
+zstyle ':completion:*:*:kill:*:processes' list-colors '=(#b) #([0-9]#)*=0=01;31'
+
+# History Substring Search Bindings
+bindkey '^[[A' history-substring-search-up
+bindkey '^[[B' history-substring-search-down
+bindkey '^P' history-substring-search-up
+bindkey '^N' history-substring-search-down
+
+# Additional Tools
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+eval "$(direnv hook zsh)"
+
+# Modern Tools
+eval "$(zoxide init zsh)"
+eval "$(atuin init zsh)"
+
+# Zoxide aliases
+alias j='z'
+
+# Google Cloud SDK Lazy Loading
+gcloud() {
+    unset -f gcloud gsutil
+    if [ -f '/Users/kevin/Code/google-cloud-sdk/path.zsh.inc' ]; then 
+        . '/Users/kevin/Code/google-cloud-sdk/path.zsh.inc'
+    fi
+    if [ -f '/Users/kevin/Code/google-cloud-sdk/completion.zsh.inc' ]; then 
+        . '/Users/kevin/Code/google-cloud-sdk/completion.zsh.inc'
+    fi
+    gcloud "$@"
+}
+
+gsutil() {
+    unset -f gcloud gsutil
+    if [ -f '/Users/kevin/Code/google-cloud-sdk/path.zsh.inc' ]; then 
+        . '/Users/kevin/Code/google-cloud-sdk/path.zsh.inc'
+    fi
+    gsutil "$@"
+}
+
+# NVM Lazy Loading (for faster shell startup)
+export NVM_DIR="$HOME/.nvm"
+nvm() {
+    unset -f nvm node npm npx
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+    nvm "$@"
+}
+
+node() {
+    unset -f nvm node npm npx
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    node "$@"
+}
+
+npm() {
+    unset -f nvm node npm npx
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    npm "$@"
+}
+
+npx() {
+    unset -f nvm node npm npx
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    npx "$@"
+}
+
+# Docker & Kubectl Lazy Loading
+docker() {
+    unset -f docker
+    source $ZSH/plugins/docker/docker.plugin.zsh
+    docker "$@"
+}
+
+kubectl() {
+    unset -f kubectl
+    source $ZSH/plugins/kubectl/kubectl.plugin.zsh
+    kubectl "$@"
+}
+
+# Bun
+[ -s "/Users/kevin/.bun/_bun" ] && source "/Users/kevin/.bun/_bun"
+
+# Global Aliases (work anywhere in command)
+alias -g G='| grep'
+alias -g L='| less'
+alias -g H='| head'
+alias -g T='| tail'
+alias -g S='| sort'
+alias -g U='| uniq'
+alias -g C='| wc -l'
+alias -g J='| jq .'
+alias -g Y='| pbcopy'
+alias -g P='| pbpaste'
+alias -g NE='2> /dev/null'
+alias -g NUL='> /dev/null 2>&1'
+
+# Suffix Aliases (open files by extension)
+alias -s {yml,yaml,json,tf,md,txt}=nvim
+alias -s {png,jpg,jpeg,gif,pdf}=open
+alias -s {mp4,mov,avi,mkv}=open
+
+# System Aliases
+alias cat="bat"
+alias ls="eza"
+alias ll="eza -la"
+alias la="eza -a"
+alias lt="eza --tree"
+alias watch="watch -n 1"
+alias rg="rg -S"
+alias df="duf"
+alias du="dust"
+alias ps="procs"
+alias ping="gping"
+alias find="fd"
+
+# Editor Aliases
+alias v="nvim"
+alias vim="nvim"
+alias cfg="v ~/.zshrc && source ~/.zshrc"
+alias src="source ~/.zshrc"
+
+# Utility Aliases
+alias clr="clear"
+alias cdr='cd $(git rev-parse --show-toplevel 2>/dev/null || echo .)'
+alias python='python3'
+alias pip='pip3'
+alias help='tldr'
+alias http='httpie'
+alias bottom='btm'
+alias gitlog='gitui'
+alias lg='lazygit'
+
+# Kubernetes Aliases
+alias k="kubectl"
+alias kctx="kubectx"
+alias kns="kubens"
+alias ceph='kubectl rook-ceph ceph'
+
+# Git Aliases
+galias() {
+    alias $1="git $2"
+}
+
+galias gs   "status -sb"
+galias gad  "add"
+galias gbi  "bisect"
+galias gbr  "branch"
+galias gcm  "commit"
+galias gcp  "cherry-pick"
+galias gclo "clone"
+galias gco  "checkout"
+galias gdf  "diff"
+galias ggc  "gc --prune=all"
+galias glo  "-c core.pager='less -p \"^commit \"' log"
+galias glop "-c core.pager='less -p \"^commit \"' log -p"
+galias gmr  "merge"
+galias gpl  "pull"
+galias gps  "push"
+galias grb  "rebase"
+galias grs  "reset"
+galias grsh "reset --hard"
+galias grt  "remote"
+galias grv  "revert"
+galias gsh  "show"
+galias gsm  "submodule"
+galias gst  "stash"
+galias grbc "git rebase --continue"
+
+# Tmux Aliases
+alias ta="tmux -a"
+alias tk="tmux kill-server"
+alias tks="tmux kill-session -t"
+
+# Docker Aliases
+alias dprune='docker system prune -af --volumes'
+alias dstop='docker stop $(docker ps -q)'
+alias drm='docker rm $(docker ps -aq)'
+alias drmi='docker rmi $(docker images -q)'
+
+# Application Aliases
+alias tsm="transmission-remote"
+alias temporal='temporal --env dev'
+alias tailscale="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
+alias tssh='tailscale ssh'
+alias mx0='tailscale ssh root@mx0'
+alias pop='tailscale ssh pop-os'
+alias crdb="cockroach sql --insecure"
+alias claude="claude --dangerously-skip-permissions"
+
+# GitHub Copilot Aliases
+alias exp="gh copilot explain"
+alias sug="gh copilot suggest"
+
+# macOS Specific
+alias abrew="arch -arm64 brew"
+
+# Kubernetes Functions
+# Quick context switching with fzf
+kctxf() {
+    local context=$(kubectl config get-contexts -o name | fzf --height 40% --reverse)
+    [[ -n "$context" ]] && kubectl config use-context "$context"
+}
+
+# Quick namespace switching with fzf
+knsf() {
+    local ns=$(kubectl get ns -o name | cut -d/ -f2 | fzf --height 40% --reverse)
+    [[ -n "$ns" ]] && kubectl config set-context --current --namespace="$ns"
+}
+
+# Get all resources in namespace
+kall() {
+    kubectl api-resources --verbs=list --namespaced -o name | xargs -n 1 kubectl get --show-kind --ignore-not-found ${@}
+}
+
+# Watch pods with custom columns
+kwp() {
+    watch -n 1 "kubectl get pods -o custom-columns=NAME:.metadata.name,STATUS:.status.phase,RESTARTS:.status.containerStatuses[0].restartCount,AGE:.metadata.creationTimestamp ${@}"
+}
+
+# Quick pod exec
+kexec() {
+    local pod=$(kubectl get pods -o name | cut -d/ -f2 | fzf --height 40% --reverse)
+    [[ -n "$pod" ]] && kubectl exec -it "$pod" -- ${@:-/bin/bash}
+}
+
+# Quick pod logs
+klogs() {
+    local pod=$(kubectl get pods -o name | cut -d/ -f2 | fzf --height 40% --reverse)
+    [[ -n "$pod" ]] && kubectl logs -f "$pod" ${@}
+}
+
+# Docker Functions
+# Quick docker exec with fzf
+dexec() {
+    local container=$(docker ps --format "table {{.Names}}" | tail -n +2 | fzf --height 40% --reverse)
+    [[ -n "$container" ]] && docker exec -it "$container" ${@:-/bin/bash}
+}
+
+# Docker logs with fzf
+dlogs() {
+    local container=$(docker ps -a --format "table {{.Names}}" | tail -n +2 | fzf --height 40% --reverse)
+    [[ -n "$container" ]] && docker logs -f "$container"
+}
+
+# Git Functions
+# Interactive branch checkout
+gcof() {
+    local branch=$(git branch -a | fzf --height 40% --reverse | sed 's/^[* ]*//' | sed 's/^remotes\///')
+    [[ -n "$branch" ]] && git checkout "$branch"
+}
+
+# Interactive commit browser
+gshow() {
+    git log --graph --color=always --format="%C(auto)%h%d %s %C(black)%C(bold)%cr" "$@" |
+    fzf --ansi --no-sort --reverse --tiebreak=index --bind=ctrl-s:toggle-sort \
+        --bind "ctrl-m:execute:
+            (grep -o '[a-f0-9]\{7\}' | head -1 |
+            xargs -I % sh -c 'git show --color=always % | less -R') << 'FZF-EOF'
+            {}
+FZF-EOF"
+}
+
+# Utility Functions
+# Kill process on port
+killport() {
+    lsof -ti:$1 | xargs kill -9
+}
+
+# Find and replace in current directory
+replace() {
+    rg -l "$1" | xargs sed -i '' "s/$1/$2/g"
+}
+
+# Quick HTTP server
+serve() {
+    python3 -m http.server ${1:-8000}
+}
+
+# JSON prettify from clipboard
+jpretty() {
+    pbpaste | jq . | pbcopy
+}
+
+# Top processes by CPU
+topcpu() {
+    ps aux | sort -nrk 3,3 | head -n ${1:-10}
+}
+
+# Top processes by memory
+topmem() {
+    ps aux | sort -nrk 4,4 | head -n ${1:-10}
+}
+
+# Create directory and cd into it
+mkcd() {
+    mkdir -p "$1" && cd "$1"
+}
+
+# Extract any archive
+extract() {
+    if [ -f $1 ]; then
+        case $1 in
+            *.tar.bz2)   tar xvjf $1    ;;
+            *.tar.gz)    tar xvzf $1    ;;
+            *.tar.xz)    tar xvJf $1    ;;
+            *.bz2)       bunzip2 $1     ;;
+            *.rar)       unrar x $1     ;;
+            *.gz)        gunzip $1      ;;
+            *.tar)       tar xvf $1     ;;
+            *.tbz2)      tar xvjf $1    ;;
+            *.tgz)       tar xvzf $1    ;;
+            *.zip)       unzip $1       ;;
+            *.Z)         uncompress $1  ;;
+            *.7z)        7z x $1        ;;
+            *)           echo "'$1' cannot be extracted via extract()" ;;
+        esac
+    else
+        echo "'$1' is not a valid file"
+    fi
+}
+
+# Install additional plugins if they don't exist
+ZSH_CUSTOM=${ZSH_CUSTOM:-~/.oh-my-zsh/custom}
+
+# Fast syntax highlighting
+if [[ ! -d "$ZSH_CUSTOM/plugins/fast-syntax-highlighting" ]]; then
+  git clone https://github.com/zdharma-continuum/fast-syntax-highlighting.git \
+    "$ZSH_CUSTOM/plugins/fast-syntax-highlighting"
+fi
+
+# Zsh autosuggestions
+if [[ ! -d "$ZSH_CUSTOM/plugins/zsh-autosuggestions" ]]; then
+  git clone https://github.com/zsh-users/zsh-autosuggestions \
+    "$ZSH_CUSTOM/plugins/zsh-autosuggestions"
+fi
+
+# Configure autosuggestions
+ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#666666,underline"
+ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20
+
+# Web search shortcuts
+alias google="web_search google"
+alias ddg="web_search duckduckgo"
+alias gh="web_search github"
+alias so="web_search stackoverflow"
+
+# Load local configuration if it exists
+[ -f ~/.zshrc.local ] && source ~/.zshrc.local
