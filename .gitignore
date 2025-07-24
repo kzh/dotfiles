@@ -1,4 +1,15 @@
-.vim/plugged/
-.vim/autoload/
-.tmux/plugins/
-.tmux/resurrect/
+# Backup files
+*.backup
+
+# Brewfile lock
+Brewfile.lock.json
+
+# macOS
+.DS_Store
+
+# Editor directories
+.idea/
+.vscode/
+*.swp
+*.swo
+*~

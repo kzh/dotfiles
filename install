@@ -1,0 +1,5 @@
+#!/bin/bash
+D=$(dirname "$(realpath "$0")")
+ln -sf "$D/config/shell/zshrc" ~/.zshrc
+ln -sf "$D/config/terminal/tmux.conf" ~/.tmux.conf
+ln -sfn "$D/config/editors/nvim" ~/.config/nvim
