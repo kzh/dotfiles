@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+
+window_type="${1:-default}"
+window_name=""
+initial_command=""
+
+case "$window_type" in
+    git)
+        window_name="git"
+        if command -v lazygit >/dev/null 2>&1; then
+            initial_command="lazygit"
+        else
+            initial_command="git status"
+        fi
+        ;;
+    test)
+        window_name="test"
+        if [[ -f "package.json" ]]; then
+            initial_command="npm test -- --watch"
+        elif [[ -f "Cargo.toml" ]]; then
+            initial_command="cargo watch -x test"
+        elif [[ -f "go.mod" ]]; then
+            initial_command="go test ./... -v"
+        elif [[ -f "pytest.ini" ]] || [[ -f "setup.py" ]] || [[ -f "pyproject.toml" ]]; then
+            initial_command="pytest --watch"
+        else
+            initial_command="echo 'No test runner detected. Configure your test command here.'"
+        fi
+        ;;
+    server)
+        window_name="server"
+        if [[ -f "package.json" ]]; then
+            if grep -q '"dev"' package.json 2>/dev/null; then
+                initial_command="npm run dev"
+            elif grep -q '"start"' package.json 2>/dev/null; then
+                initial_command="npm start"
+            else
+                initial_command="npm run"
+            fi
+        elif [[ -f "Cargo.toml" ]]; then
+            initial_command="cargo run"
+        elif [[ -f "go.mod" ]]; then
+            initial_command="go run ."
+        elif [[ -f "manage.py" ]]; then
+            initial_command="python manage.py runserver"
+        elif [[ -f "requirements.txt" ]] || [[ -f "pyproject.toml" ]]; then
+            initial_command="python -m http.server 8000"
+        elif [[ -f "docker-compose.yml" ]] || [[ -f "docker-compose.yaml" ]]; then
+            initial_command="docker-compose up"
+        else
+            initial_command="echo 'No server command detected. Configure your server command here.'"
+        fi
+        ;;
+    *)
+        echo "Usage: $0 [git|test|server]"
+        exit 1
+        ;;
+esac
+
+if tmux list-windows | grep -q "^[0-9]*: $window_name"; then
+    tmux select-window -t "$window_name"
+else
+    tmux new-window -n "$window_name" "$initial_command"
+fi

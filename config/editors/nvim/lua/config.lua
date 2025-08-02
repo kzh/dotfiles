@@ -1,9 +1,9 @@
--- Combined config: options, keymaps, autocmds
 
--- Options
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 vim.g.have_nerd_font = true
+
+vim.opt.clipboard = 'unnamedplus'
 
 vim.opt.number = true
 vim.opt.relativenumber = true
@@ -35,6 +35,7 @@ vim.opt.softtabstop = 2
 vim.opt.shiftround = true
 vim.opt.smartindent = true
 vim.opt.autoindent = true
+
 vim.opt.wrap = false
 vim.opt.linebreak = true
 vim.opt.textwidth = 0
@@ -46,6 +47,7 @@ vim.opt.autoread = true
 vim.opt.backup = false
 vim.opt.writebackup = false
 vim.opt.swapfile = false
+
 vim.opt.termguicolors = true
 vim.opt.colorcolumn = '100'
 vim.opt.conceallevel = 2
@@ -61,7 +63,9 @@ vim.opt.spelloptions = 'camel'
 vim.opt.virtualedit = 'block'
 vim.opt.wildmode = 'longest:full,full'
 vim.opt.winminwidth = 5
+
 vim.opt.diffopt:append { 'algorithm:histogram', 'indent-heuristic' }
+
 vim.opt.undodir = vim.fn.stdpath('data') .. '/undo'
 vim.opt.fillchars = {
   vert = '│',
@@ -73,6 +77,7 @@ vim.opt.fillchars = {
   foldsep = '│',
   foldclose = '▸',
 }
+
 vim.g.markdown_recommended_style = 0
 
 if vim.fn.executable('rg') == 1 then
@@ -80,12 +85,26 @@ if vim.fn.executable('rg') == 1 then
   vim.opt.grepformat = '%f:%l:%c:%m'
 end
 
--- Keymaps
+vim.opt.synmaxcol = 500
+vim.opt.redrawtime = 10000
+vim.opt.regexpengine = 1
+vim.opt.maxmempattern = 20000
+
+vim.opt.showmatch = true
+vim.opt.matchtime = 2
+
+vim.opt.undolevels = 10000
+vim.opt.history = 10000
+
+vim.opt.belloff = 'all'
 vim.keymap.set({ 'n', 'v' }, '<Space>', '<Nop>', { silent = true })
+
 vim.keymap.set('n', 'k', "v:count == 0 ? 'gk' : 'k'", { expr = true, silent = true })
 vim.keymap.set('n', 'j', "v:count == 0 ? 'gj' : 'j'", { expr = true, silent = true })
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
+
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
+
 vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
 vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left window' })
 vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
@@ -114,11 +133,54 @@ vim.keymap.set('n', 'N', 'Nzzzv', { desc = 'Previous search result and center' }
 vim.keymap.set('i', '<C-c>', '<Esc>', { desc = 'Alternative escape' })
 vim.keymap.set('n', '<leader>s', [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]], { desc = 'Replace word under cursor' })
 vim.keymap.set('n', '<leader>x', '<cmd>!chmod +x %<CR>', { desc = 'Make file executable', silent = true })
-vim.keymap.set('n', '<leader>-', '<CMD>Oil<CR>', { desc = 'Open parent directory' })
 vim.keymap.set('n', '<leader>lg', '<cmd>LazyGit<cr>', { desc = 'LazyGit' })
+vim.keymap.set('n', '<leader>w', '<cmd>w<cr>', { desc = 'Save file' })
+vim.keymap.set('n', '<leader>W', '<cmd>wa<cr>', { desc = 'Save all files' })
+vim.keymap.set('n', '<C-s>', '<cmd>w<cr>', { desc = 'Save file' })
+vim.keymap.set('i', '<C-s>', '<Esc><cmd>w<cr>a', { desc = 'Save file in insert mode' })
+vim.keymap.set('n', ']b', '<cmd>bnext<cr>', { desc = 'Next buffer' })
+vim.keymap.set('n', '[b', '<cmd>bprevious<cr>', { desc = 'Previous buffer' })
+vim.keymap.set('n', '<leader>bd', '<cmd>bdelete<cr>', { desc = 'Delete buffer' })
+vim.keymap.set('n', '<leader>bD', '<cmd>bdelete!<cr>', { desc = 'Force delete buffer' })
+vim.keymap.set('n', '<leader>bn', '<cmd>enew<cr>', { desc = 'New buffer' })
+vim.keymap.set('n', '<leader>sv', '<C-w>v', { desc = 'Split vertically' })
+vim.keymap.set('n', '<leader>sh', '<C-w>s', { desc = 'Split horizontally' })
+vim.keymap.set('n', '<leader>se', '<C-w>=', { desc = 'Equal splits' })
+vim.keymap.set('n', '<leader>sx', '<cmd>close<cr>', { desc = 'Close split' })
+vim.keymap.set('n', ']q', '<cmd>cnext<cr>', { desc = 'Next quickfix' })
+vim.keymap.set('n', '[q', '<cmd>cprev<cr>', { desc = 'Previous quickfix' })
+vim.keymap.set('n', '<leader>co', '<cmd>copen<cr>', { desc = 'Open quickfix' })
+vim.keymap.set('n', '<leader>cc', '<cmd>cclose<cr>', { desc = 'Close quickfix' })
+vim.keymap.set('n', '<C-a>', 'ggVG', { desc = 'Select all' })
+vim.keymap.set('n', 'J', 'mzJ`z', { desc = 'Join lines without moving cursor' })
+vim.keymap.set('n', '*', '*zz', { desc = 'Search word and center' })
+vim.keymap.set('n', '#', '#zz', { desc = 'Search word backwards and center' })
+vim.keymap.set('n', 'g*', 'g*zz', { desc = 'Search partial word and center' })
+vim.keymap.set('n', 'g#', 'g#zz', { desc = 'Search partial word backwards and center' })
+vim.keymap.set('n', '<leader>u', '<cmd>UndotreeToggle<cr>', { desc = 'Toggle undo tree' })
+vim.keymap.set('n', '<leader>tw', '<cmd>set wrap!<cr>', { desc = 'Toggle word wrap' })
+vim.keymap.set('n', '<leader>tn', '<cmd>set relativenumber!<cr>', { desc = 'Toggle relative numbers' })
+vim.keymap.set('n', 'Q', '@q', { desc = 'Execute macro q' })
+vim.keymap.set('x', 'Q', ':norm @q<cr>', { desc = 'Execute macro q on selection' })
+vim.keymap.set('n', '+', '<C-a>', { desc = 'Increment number' })
+vim.keymap.set('n', '-', '<C-x>', { desc = 'Decrement number' })
+vim.keymap.set('x', '+', 'g<C-a>', { desc = 'Increment numbers' })
+vim.keymap.set('x', '-', 'g<C-x>', { desc = 'Decrement numbers' })
+vim.cmd([[
+  " Common typos
+  iabbrev teh the
+  iabbrev Teh The
+  iabbrev taht that
+  iabbrev Taht That
+  iabbrev waht what
+  iabbrev Waht What
+  iabbrev tehn then
+  iabbrev Tehn Then
 
--- Autocmds
--- Highlight on yank
+  " Quick expansions
+  iabbrev dts <C-R>=strftime("%Y-%m-%d")<CR>
+  iabbrev dtl <C-R>=strftime("%Y-%m-%d %H:%M:%S")<CR>
+]])
 vim.api.nvim_create_autocmd('TextYankPost', {
   desc = 'Highlight when yanking (copying) text',
   group = vim.api.nvim_create_augroup('kickstart-highlight-yank', { clear = true }),
@@ -127,7 +189,6 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   end,
 })
 
--- Remove trailing whitespace on save (except markdown)
 vim.api.nvim_create_autocmd('BufWritePre', {
   desc = 'Remove trailing whitespace on save',
   group = vim.api.nvim_create_augroup('TrimWhitespace', { clear = true }),
@@ -142,7 +203,6 @@ vim.api.nvim_create_autocmd('BufWritePre', {
   end,
 })
 
--- Check if file changed when its window is focus
 vim.api.nvim_create_autocmd({ 'FocusGained', 'TermClose', 'TermLeave' }, {
   desc = 'Check if file was changed outside of Neovim',
   group = vim.api.nvim_create_augroup('CheckFileChange', { clear = true }),
@@ -153,7 +213,6 @@ vim.api.nvim_create_autocmd({ 'FocusGained', 'TermClose', 'TermLeave' }, {
   end,
 })
 
--- Resize splits if window got resized
 vim.api.nvim_create_autocmd('VimResized', {
   desc = 'Resize splits when window is resized',
   group = vim.api.nvim_create_augroup('ResizeSplits', { clear = true }),
@@ -164,7 +223,6 @@ vim.api.nvim_create_autocmd('VimResized', {
   end,
 })
 
--- Go to last location when opening a buffer
 vim.api.nvim_create_autocmd('BufReadPost', {
   desc = 'Go to last location when opening a buffer',
   group = vim.api.nvim_create_augroup('LastLocation', { clear = true }),
@@ -183,7 +241,6 @@ vim.api.nvim_create_autocmd('BufReadPost', {
   end,
 })
 
--- Close certain filetypes with <q>
 vim.api.nvim_create_autocmd('FileType', {
   desc = 'Close certain filetypes with <q>',
   group = vim.api.nvim_create_augroup('CloseWithQ', { clear = true }),
@@ -206,7 +263,6 @@ vim.api.nvim_create_autocmd('FileType', {
   end,
 })
 
--- Auto create dir when saving a file
 vim.api.nvim_create_autocmd('BufWritePre', {
   desc = 'Auto create dir when saving a file',
   group = vim.api.nvim_create_augroup('AutoCreateDir', { clear = true }),
@@ -219,7 +275,6 @@ vim.api.nvim_create_autocmd('BufWritePre', {
   end,
 })
 
--- Wrap and check for spell in text filetypes
 vim.api.nvim_create_autocmd('FileType', {
   desc = 'Enable wrap and spell for certain filetypes',
   group = vim.api.nvim_create_augroup('WrapSpell', { clear = true }),
@@ -230,7 +285,6 @@ vim.api.nvim_create_autocmd('FileType', {
   end,
 })
 
--- Fix conceallevel for json files
 vim.api.nvim_create_autocmd('FileType', {
   desc = 'Fix conceallevel for json files',
   group = vim.api.nvim_create_augroup('JsonConceal', { clear = true }),
@@ -239,3 +293,4 @@ vim.api.nvim_create_autocmd('FileType', {
     vim.opt_local.conceallevel = 0
   end,
 })
+

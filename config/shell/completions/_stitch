@@ -1,0 +1,204 @@
+#compdef client
+
+autoload -U is-at-least
+
+_client() {
+    typeset -A opt_args
+    typeset -a _arguments_options
+    local ret=1
+
+    if is-at-least 5.2; then
+        _arguments_options=(-s -S -C)
+    else
+        _arguments_options=(-s -C)
+    fi
+
+    local context curcontext="$curcontext" state line
+    _arguments "${_arguments_options[@]}" : \
+'--server=[]:SERVER:_default' \
+'-o+[]:OUTPUT:(json table)' \
+'--output=[]:OUTPUT:(json table)' \
+'--timeout=[]:TIMEOUT:_default' \
+'--retries=[]:RETRIES:_default' \
+'*--headers=[]:HEADERS:_default' \
+'*-v[]' \
+'*--verbose[]' \
+'--no-color[]' \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+'-V[Print version]' \
+'--version[Print version]' \
+":: :_client_commands" \
+"*::: :->client" \
+&& ret=0
+    case $state in
+    (client)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:client-command-$line[1]:"
+        case $line[1] in
+            (list)
+_arguments "${_arguments_options[@]}" : \
+'-h[Print help]' \
+'--help[Print help]' \
+&& ret=0
+;;
+(track)
+_arguments "${_arguments_options[@]}" : \
+'-h[Print help]' \
+'--help[Print help]' \
+':name:_default' \
+&& ret=0
+;;
+(untrack)
+_arguments "${_arguments_options[@]}" : \
+'-y[]' \
+'--yes[]' \
+'-h[Print help]' \
+'--help[Print help]' \
+':name:_default' \
+&& ret=0
+;;
+(completions)
+_arguments "${_arguments_options[@]}" : \
+'-h[Print help]' \
+'--help[Print help]' \
+':shell:(bash elvish fish powershell zsh)' \
+&& ret=0
+;;
+(setup)
+_arguments "${_arguments_options[@]}" : \
+'-h[Print help]' \
+'--help[Print help]' \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+":: :_client__help_commands" \
+"*::: :->help" \
+&& ret=0
+
+    case $state in
+    (help)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:client-help-command-$line[1]:"
+        case $line[1] in
+            (list)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(track)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(untrack)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(completions)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(setup)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+        esac
+    ;;
+esac
+}
+
+(( $+functions[_client_commands] )) ||
+_client_commands() {
+    local commands; commands=(
+'list:' \
+'track:' \
+'untrack:' \
+'completions:' \
+'setup:' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'client commands' commands "$@"
+}
+(( $+functions[_client__completions_commands] )) ||
+_client__completions_commands() {
+    local commands; commands=()
+    _describe -t commands 'client completions commands' commands "$@"
+}
+(( $+functions[_client__help_commands] )) ||
+_client__help_commands() {
+    local commands; commands=(
+'list:' \
+'track:' \
+'untrack:' \
+'completions:' \
+'setup:' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'client help commands' commands "$@"
+}
+(( $+functions[_client__help__completions_commands] )) ||
+_client__help__completions_commands() {
+    local commands; commands=()
+    _describe -t commands 'client help completions commands' commands "$@"
+}
+(( $+functions[_client__help__help_commands] )) ||
+_client__help__help_commands() {
+    local commands; commands=()
+    _describe -t commands 'client help help commands' commands "$@"
+}
+(( $+functions[_client__help__list_commands] )) ||
+_client__help__list_commands() {
+    local commands; commands=()
+    _describe -t commands 'client help list commands' commands "$@"
+}
+(( $+functions[_client__help__setup_commands] )) ||
+_client__help__setup_commands() {
+    local commands; commands=()
+    _describe -t commands 'client help setup commands' commands "$@"
+}
+(( $+functions[_client__help__track_commands] )) ||
+_client__help__track_commands() {
+    local commands; commands=()
+    _describe -t commands 'client help track commands' commands "$@"
+}
+(( $+functions[_client__help__untrack_commands] )) ||
+_client__help__untrack_commands() {
+    local commands; commands=()
+    _describe -t commands 'client help untrack commands' commands "$@"
+}
+(( $+functions[_client__list_commands] )) ||
+_client__list_commands() {
+    local commands; commands=()
+    _describe -t commands 'client list commands' commands "$@"
+}
+(( $+functions[_client__setup_commands] )) ||
+_client__setup_commands() {
+    local commands; commands=()
+    _describe -t commands 'client setup commands' commands "$@"
+}
+(( $+functions[_client__track_commands] )) ||
+_client__track_commands() {
+    local commands; commands=()
+    _describe -t commands 'client track commands' commands "$@"
+}
+(( $+functions[_client__untrack_commands] )) ||
+_client__untrack_commands() {
+    local commands; commands=()
+    _describe -t commands 'client untrack commands' commands "$@"
+}
+
+if [ "$funcstack[1]" = "_client" ]; then
+    _client "$@"
+else
+    compdef _client client
+fi

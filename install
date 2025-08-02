@@ -1,5 +1,296 @@
-#!/bin/bash
-D=$(dirname "$(realpath "$0")")
-ln -sf "$D/config/shell/zshrc" ~/.zshrc
-ln -sf "$D/config/terminal/tmux.conf" ~/.tmux.conf
-ln -sfn "$D/config/editors/nvim" ~/.config/nvim
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+[[ "${DEBUG:-0}" == "1" ]] && set -x
+
+if [[ -n "${BASH_SOURCE[0]}" ]] && [[ -f "${BASH_SOURCE[0]}" ]]; then
+    DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+else
+    echo "Error: This install script should be run from a cloned dotfiles repository" >&2
+    echo "Please run: git clone https://github.com/kzh/dotfiles.git" >&2
+    exit 1
+fi
+BACKUP_DIR="$HOME/.dotfiles_backup/$(date +%Y%m%d_%H%M%S)"
+CONFIG_DIR="$HOME/.config"
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+log() {
+    echo -e "${BLUE}[$(date +'%Y-%m-%d %H:%M:%S')]${NC} $*"
+}
+
+success() {
+    echo -e "${GREEN}✓${NC} $*"
+}
+
+error() {
+    echo -e "${RED}✗${NC} $*" >&2
+}
+
+warning() {
+    echo -e "${YELLOW}⚠${NC} $*"
+}
+
+confirm() {
+    local prompt="${1:-Continue?}"
+    local default="${2:-n}"
+    local response
+
+    if [[ "$default" == "y" ]]; then
+        prompt="$prompt [Y/n] "
+    else
+        prompt="$prompt [y/N] "
+    fi
+
+    read -p "$prompt" -n 1 -r response
+    echo
+
+    if [[ -z "$response" ]]; then
+        response="$default"
+    fi
+
+    [[ "$response" =~ ^[Yy]$ ]]
+}
+
+backup_existing() {
+    local file="$1"
+    if [[ -e "$file" && ! -L "$file" ]]; then
+        mkdir -p "$BACKUP_DIR"
+        local backup_file="$BACKUP_DIR/$(basename "$file")"
+        cp -r "$file" "$backup_file"
+        log "Backed up existing file: $file -> $backup_file"
+    fi
+}
+
+create_symlink() {
+    local source="$1"
+    local target="$2"
+
+    mkdir -p "$(dirname "$target")"
+
+    backup_existing "$target"
+
+    rm -rf "$target"
+
+    ln -sf "$source" "$target"
+    success "Linked: $source -> $target"
+}
+
+check_dependency() {
+    local cmd="$1"
+    if command -v "$cmd" &> /dev/null; then
+        success "$cmd is installed"
+        return 0
+    else
+        warning "$cmd is not installed"
+        return 1
+    fi
+}
+
+install_dependencies() {
+    log "Checking dependencies..."
+
+    local missing_deps=()
+
+    check_dependency "git" || missing_deps+=("git")
+    check_dependency "zsh" || missing_deps+=("zsh")
+    check_dependency "tmux" || missing_deps+=("tmux")
+    check_dependency "nvim" || missing_deps+=("neovim")
+
+    if [[ ${#missing_deps[@]} -gt 0 ]]; then
+        warning "Missing dependencies: ${missing_deps[*]}"
+
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            if check_dependency "brew"; then
+                if confirm "Install missing dependencies with Homebrew?"; then
+                    brew install "${missing_deps[@]}"
+                fi
+            else
+                error "Homebrew not found. Please install Homebrew first."
+                exit 1
+            fi
+        else
+            warning "Please install missing dependencies manually."
+        fi
+    fi
+}
+
+install_shell_config() {
+    log "Installing shell configuration..."
+
+    create_symlink "$DOTFILES_DIR/config/shell/zshrc" "$HOME/.zshrc"
+
+    mkdir -p "$HOME/.config/zsh"
+
+    if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
+        if confirm "Install Oh My Zsh?"; then
+            sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+
+            local custom_plugins="$HOME/.oh-my-zsh/custom/plugins"
+
+            if [[ ! -d "$custom_plugins/zsh-autosuggestions" ]]; then
+                git clone https://github.com/zsh-users/zsh-autosuggestions "$custom_plugins/zsh-autosuggestions"
+            fi
+
+            if [[ ! -d "$custom_plugins/fast-syntax-highlighting" ]]; then
+                git clone https://github.com/zdharma-continuum/fast-syntax-highlighting "$custom_plugins/fast-syntax-highlighting"
+            fi
+
+            if [[ ! -d "$custom_plugins/fzf-tab" ]]; then
+                git clone https://github.com/Aloxaf/fzf-tab "$custom_plugins/fzf-tab"
+            fi
+        fi
+    fi
+}
+
+install_terminal_config() {
+    log "Installing terminal configuration..."
+
+    create_symlink "$DOTFILES_DIR/config/terminal/tmux.conf" "$HOME/.tmux.conf"
+
+    mkdir -p "$CONFIG_DIR/tmux"
+    if [[ -d "$DOTFILES_DIR/config/terminal/tmux/scripts" ]]; then
+        create_symlink "$DOTFILES_DIR/config/terminal/tmux/scripts" "$CONFIG_DIR/tmux/scripts"
+        chmod +x "$DOTFILES_DIR/config/terminal/tmux/scripts"/* 2>/dev/null || true
+    fi
+
+    if [[ ! -d "$HOME/.tmux/plugins/tpm" ]]; then
+        if confirm "Install Tmux Plugin Manager?"; then
+            git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"
+            warning "Remember to press 'prefix + I' in tmux to install plugins"
+        fi
+    fi
+
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        local ghostty_dir="$HOME/Library/Application Support/com.mitchellh.ghostty"
+        mkdir -p "$ghostty_dir"
+        create_symlink "$DOTFILES_DIR/config/terminal/ghostty/config" "$ghostty_dir/config"
+    else
+        create_symlink "$DOTFILES_DIR/config/terminal/ghostty/config" "$CONFIG_DIR/ghostty/config"
+    fi
+}
+
+install_editor_config() {
+    log "Installing editor configuration..."
+
+    create_symlink "$DOTFILES_DIR/config/editors/nvim" "$CONFIG_DIR/nvim"
+
+    mkdir -p "$CONFIG_DIR/nvim/snippets"
+}
+
+install_git_config() {
+    log "Installing git configuration..."
+
+    create_symlink "$DOTFILES_DIR/config/git/gitconfig" "$HOME/.gitconfig"
+    create_symlink "$DOTFILES_DIR/config/git/gitignore_global" "$HOME/.gitignore_global"
+}
+
+install_homebrew_packages() {
+    if [[ "$OSTYPE" == "darwin"* ]] && check_dependency "brew"; then
+        if confirm "Install Homebrew packages from Brewfile?"; then
+            log "Installing Homebrew packages..."
+            brew bundle --file="$DOTFILES_DIR/Brewfile"
+        fi
+    fi
+}
+
+setup_macos_defaults() {
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        if confirm "Configure macOS defaults?"; then
+            log "Configuring macOS defaults..."
+
+            defaults write com.apple.finder AppleShowAllFiles -bool true
+
+            defaults write com.apple.finder ShowPathbar -bool true
+
+            defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false
+
+            defaults write NSGlobalDomain KeyRepeat -int 2
+            defaults write NSGlobalDomain InitialKeyRepeat -int 15
+
+            defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking -bool true
+
+            mkdir -p "$HOME/Pictures/Screenshots"
+            defaults write com.apple.screencapture location -string "$HOME/Pictures/Screenshots"
+
+            killall Finder
+
+            success "macOS defaults configured"
+        fi
+    fi
+}
+
+main() {
+    echo
+    echo "╔══════════════════════════════════════════════════════════════════════════╗"
+    echo "║                      Dotfiles Installation Started                        ║"
+    echo "╚══════════════════════════════════════════════════════════════════════════╝"
+    echo
+
+    log "Dotfiles directory: $DOTFILES_DIR"
+
+    if [[ ! -f "$DOTFILES_DIR/install" ]] || [[ ! -d "$DOTFILES_DIR/config" ]]; then
+        error "This script must be run from the dotfiles directory"
+        error "Expected files not found in: $DOTFILES_DIR"
+        exit 1
+    fi
+
+    warning "This will create symlinks and potentially overwrite existing files"
+    if ! confirm "Do you want to continue?" "n"; then
+        log "Installation cancelled"
+        exit 0
+    fi
+
+    install_dependencies
+
+    install_shell_config
+    install_terminal_config
+    install_editor_config
+    install_git_config
+
+    install_homebrew_packages
+    setup_macos_defaults
+
+    echo
+    echo "╔══════════════════════════════════════════════════════════════════════════╗"
+    echo "║                      Installation Summary                                  ║"
+    echo "╚══════════════════════════════════════════════════════════════════════════╝"
+    echo
+
+    success "Dotfiles installation completed!"
+    echo
+
+    log "Installed configurations:"
+    success "  • ZSH configuration and completions"
+    success "  • Neovim configuration"
+    success "  • Tmux configuration"
+    success "  • Git configuration"
+    [[ -f "$HOME/Library/Application Support/com.mitchellh.ghostty/config" ]] && success "  • Ghostty terminal configuration"
+
+    if [[ -d "$BACKUP_DIR" ]]; then
+        echo
+        log "Backups saved to: $BACKUP_DIR"
+    fi
+
+    echo
+    log "Next steps:"
+    warning "  1. Restart your terminal or run: source ~/.zshrc"
+    warning "  2. Open tmux and press 'Ctrl-b + I' to install plugins"
+    warning "  3. Open Neovim and run :Lazy sync to install plugins"
+
+    if [[ "$SHELL" != "$(which zsh)" ]]; then
+        echo
+        warning "  4. Change default shell: chsh -s $(which zsh)"
+    fi
+
+    echo
+    success "Enjoy your new development environment! 🚀"
+}
+
+main "$@"
+

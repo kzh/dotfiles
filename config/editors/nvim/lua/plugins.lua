@@ -1,6 +1,4 @@
--- All custom plugins in one file
 return {
-  -- UI Enhancements
   { 'nvim-tree/nvim-web-devicons' },
   { 'stevearc/dressing.nvim', event = 'VeryLazy', opts = {} },
   { 'rcarriga/nvim-notify', opts = { stages = 'fade', timeout = 3000, render = 'compact' } },
@@ -26,33 +24,6 @@ return {
       presets = { bottom_search = true, command_palette = true, long_message_to_split = true, inc_rename = true },
     },
   },
-  {
-    'goolord/alpha-nvim',
-    event = 'VimEnter',
-    config = function()
-      local alpha = require('alpha')
-      local dashboard = require('alpha.themes.dashboard')
-      dashboard.section.header.val = {
-        '                                                     ',
-        '  ███╗   ██╗███████╗ ██████╗ ██╗   ██╗██╗███╗   ███╗',
-        '  ████╗  ██║██╔════╝██╔═══██╗██║   ██║██║████╗ ████║',
-        '  ██╔██╗ ██║█████╗  ██║   ██║██║   ██║██║██╔████╔██║',
-        '  ██║╚██╗██║██╔══╝  ██║   ██║╚██╗ ██╔╝██║██║╚██╔╝██║',
-        '  ██║ ╚████║███████╗╚██████╔╝ ╚████╔╝ ██║██║ ╚═╝ ██║',
-        '  ╚═╝  ╚═══╝╚══════╝ ╚═════╝   ╚═══╝  ╚═╝╚═╝     ╚═╝',
-        '                                                     ',
-      }
-      dashboard.section.buttons.val = {
-        dashboard.button('f', '  Find file', ':Telescope find_files <CR>'),
-        dashboard.button('e', '  New file', ':ene <BAR> startinsert <CR>'),
-        dashboard.button('r', '  Recent files', ':Telescope oldfiles <CR>'),
-        dashboard.button('g', '  Find text', ':Telescope live_grep <CR>'),
-        dashboard.button('c', '  Config', ':e ~/.config/nvim/init.lua <CR>'),
-        dashboard.button('q', '  Quit', ':qa<CR>'),
-      }
-      alpha.setup(dashboard.config)
-    end,
-  },
   { 'lukas-reineke/indent-blankline.nvim', main = 'ibl', event = 'VeryLazy', opts = {} },
   { 'RRethy/vim-illuminate', event = 'VeryLazy' },
   { 'folke/trouble.nvim', dependencies = { 'nvim-tree/nvim-web-devicons' }, cmd = 'Trouble', opts = {} },
@@ -68,42 +39,28 @@ return {
       words = { enabled = true },
     },
   },
-  { 'nvim-pack/nvim-spectre', cmd = 'Spectre', opts = {} },
-
-  -- Coding
   { 'windwp/nvim-ts-autotag', event = 'InsertEnter', opts = {} },
+  { 'windwp/nvim-autopairs', event = 'InsertEnter', opts = { check_ts = true } },
   { 'folke/flash.nvim', event = 'VeryLazy', opts = {} },
-  { 'mg979/vim-visual-multi', event = 'BufReadPost' },
   { 'mbbill/undotree', cmd = 'UndotreeToggle' },
   { 'tpope/vim-sleuth' },
+  { 'tpope/vim-repeat', event = 'VeryLazy' },
+  { 'tpope/vim-unimpaired', event = 'VeryLazy' },
+  { 'kylechui/nvim-surround', version = '*', event = 'VeryLazy', opts = {} },
   { 'github/copilot.vim', event = 'InsertEnter' },
-  { 'kristijanhusak/vim-dadbod-ui', dependencies = { 'tpope/vim-dadbod', 'kristijanhusak/vim-dadbod-completion' }, cmd = { 'DBUI', 'DBUIToggle' } },
-  { 'rest-nvim/rest.nvim', dependencies = { 'nvim-lua/plenary.nvim' }, ft = 'http' },
-  
-  -- File editing as buffer
   {
-    'stevearc/oil.nvim',
+    'folke/ts-comments.nvim',
     opts = {},
-    dependencies = { 'nvim-tree/nvim-web-devicons' },
+    event = 'VeryLazy',
+    enabled = vim.fn.has('nvim-0.10.0') == 1,
   },
 
-  -- Tmux integration
   { 'christoomey/vim-tmux-navigator', lazy = false },
 
-  -- Tools
   { 'folke/persistence.nvim', event = 'BufReadPre', opts = {} },
   { 'akinsho/toggleterm.nvim', version = '*', cmd = 'ToggleTerm', opts = { direction = 'float', float_opts = { border = 'curved' } } },
   { 'kevinhwang91/nvim-bqf', ft = 'qf', opts = { auto_enable = true, auto_resize_height = true } },
-  { 'stevearc/overseer.nvim', cmd = { 'OverseerRun', 'OverseerToggle' }, opts = {} },
   { 'folke/zen-mode.nvim', cmd = 'ZenMode', opts = {} },
-  { 'folke/twilight.nvim', cmd = 'Twilight', opts = {} },
-  {
-    'nvim-telescope/telescope-frecency.nvim',
-    dependencies = { 'kkharji/sqlite.lua' },
-    config = function()
-      require('telescope').load_extension('frecency')
-    end,
-  },
   {
     'ThePrimeagen/harpoon',
     branch = 'harpoon2',
@@ -117,12 +74,8 @@ return {
   { 'kdheepak/lazygit.nvim', dependencies = { 'nvim-lua/plenary.nvim' }, cmd = { 'LazyGit', 'LazyGitConfig' } },
   { 'sindrets/diffview.nvim', cmd = { 'DiffviewOpen', 'DiffviewClose' } },
 
-  -- LSP & Language Support
   { 'b0o/schemastore.nvim' },
   { 'folke/lazydev.nvim', ft = 'lua', opts = {} },
-  { 'simrat39/rust-tools.nvim', ft = 'rust' },
-  { 'nvimtools/none-ls.nvim', event = 'BufReadPre' },
-  { 'jay-babu/mason-null-ls.nvim', event = { 'BufReadPre', 'BufNewFile' }, dependencies = { 'williamboman/mason.nvim', 'nvimtools/none-ls.nvim' } },
   { 'ray-x/lsp_signature.nvim', event = 'VeryLazy', opts = {} },
   { 'smjonas/inc-rename.nvim', cmd = 'IncRename', config = true },
   {
@@ -171,16 +124,7 @@ return {
     end,
   },
 
-  -- Snippets
   { 'rafamadriz/friendly-snippets' },
-  {
-    'chrisgrieser/nvim-scissors',
-    dependencies = { 'nvim-telescope/telescope.nvim', 'L3MON4D3/LuaSnip' },
-    cmd = { 'ScissorsEditSnippet', 'ScissorsAddNewSnippet' },
-    opts = { snippetDir = vim.fn.stdpath('config') .. '/snippets' },
-  },
-
-  -- File Explorer (from kickstart)
   {
     'nvim-neo-tree/neo-tree.nvim',
     version = '*',
@@ -204,7 +148,6 @@ return {
     },
   },
 
-  -- Debug Adapter Protocol (from kickstart)
   {
     'mfussenegger/nvim-dap',
     dependencies = {
@@ -259,3 +202,4 @@ return {
   },
 
 }
+

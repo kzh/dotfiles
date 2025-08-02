@@ -1,0 +1,35 @@
+#compdef bm bmg bmd b ba bd
+
+local -a bookmark_names
+local bookmarks_file="${BOOKMARKS_FILE:-$HOME/.config/zsh/bookmarks}"
+
+_bookmarks() {
+    local cmd="$words[1]"
+    
+    case "$cmd" in
+        bm|ba)
+            _arguments \
+                '(-h --help)'{-h,--help}'[show help]' \
+                '1::name:(($(_get_bookmark_names) $(basename "$PWD")))' \
+                '2::path:_directories'
+            ;;
+        bmg|b)
+            if [[ -f "$bookmarks_file" ]]; then
+                bookmark_names=(${(f)"$(awk -F= '{print $1}' "$bookmarks_file" 2>/dev/null)"})
+                _describe -t bookmarks 'bookmark' bookmark_names
+            fi
+            ;;
+        bmd|bd)
+            if [[ -f "$bookmarks_file" ]]; then
+                bookmark_names=(${(f)"$(awk -F= '{print $1}' "$bookmarks_file" 2>/dev/null)"})
+                _describe -t bookmarks 'bookmark to delete' bookmark_names
+            fi
+            ;;
+    esac
+}
+
+_get_bookmark_names() {
+    [[ -f "$bookmarks_file" ]] && awk -F= '{print $1}' "$bookmarks_file" 2>/dev/null
+}
+
+_bookmarks "$@"
