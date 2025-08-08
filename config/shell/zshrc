@@ -33,6 +33,7 @@ typeset -U PATH path
 
 path=(
     $HOME/.local/bin
+    $HOME/.cache/.bun/bin
     $HOME/.bun/bin
     $HOME/.cargo/bin
     $GOBIN
@@ -227,426 +228,67 @@ if [ -d "$HOME/Code/google-cloud-sdk" ] && [ ! "$(command -v gcloud)" ]; then
     }
 fi
 
-    if command -v bat >/dev/null 2>&1; then
-        alias cat="bat"
-    fi
-    if command -v eza >/dev/null 2>&1; then
-        alias ls="eza --icons --group-directories-first"
-        alias ll="eza -la --icons --group-directories-first"
-        alias la="eza -a --icons --group-directories-first"
-        alias lt="eza --tree --icons"
-        alias llt="eza -la --tree --icons --level=2"
-    else
-        alias ll="ls -la"
-        alias la="ls -a"
-    fi
-    if command -v rg >/dev/null 2>&1; then
-        alias rg="rg -S"
-    fi
+    # General aliases moved to modular file: ~/.config/zsh/conf.d/aliases.zsh
+    # Kept here intentionally blank to avoid duplication.
 
-    if command -v nvim >/dev/null 2>&1; then
-        alias v="nvim"
-        alias vim="nvim"
-        alias vi="nvim"
-    fi
-    alias cfg="v ~/.zshrc && source ~/.zshrc"
-    alias src="source ~/.zshrc"
-    alias vimrc="v $DOTFILES/config/editors/nvim/init.lua"
-
-    if command -v lazygit >/dev/null 2>&1; then
-        alias lg='lazygit'
-    fi
-    alias j='z'
-    alias hg='history | grep'
-    alias path='echo -e ${PATH//:/\\n}'
-    alias reload='exec $SHELL -l'
-    alias du='du -h'
-    alias df='df -h'
-    alias free='free -h'
-
-    extract() {
-        if [ -f "$1" ]; then
-            case "$1" in
-                *.tar.bz2)   tar xjf "$1"     ;;
-                *.tar.gz)    tar xzf "$1"     ;;
-                *.bz2)       bunzip2 "$1"     ;;
-                *.rar)       unrar e "$1"     ;;
-                *.gz)        gunzip "$1"      ;;
-                *.tar)       tar xf "$1"      ;;
-                *.tbz2)      tar xjf "$1"     ;;
-                *.tgz)       tar xzf "$1"     ;;
-                *.zip)       unzip "$1"       ;;
-                *.Z)         uncompress "$1"  ;;
-                *.7z)        7z x "$1"        ;;
-                *)           echo "'$1' cannot be extracted" ;;
-            esac
-        else
-            echo "'$1' is not a valid file"
-        fi
-    }
-
-    bak() {
-        cp -r "$1" "$1.bak.$(date +%Y%m%d_%H%M%S)"
-    }
-
-    replace() {
-        if [[ $# -ne 3 ]]; then
-            echo "Usage: replace 'find' 'replace' 'files'"
-            return 1
-        fi
-        if [[ "$OSTYPE" == "darwin"* ]]; then
-            find . -type f -name "$3" -exec sed -i '' "s/$1/$2/g" {} +
-        else
-            find . -type f -name "$3" -exec sed -i "s/$1/$2/g" {} +
-        fi
-    }
-
-    alias k="kubectl"
-    alias kp="kubectl get pods"
-    alias kl="kubectl logs"
-    alias klf="kubectl logs -f"
-    alias kd="kubectl delete pod"
-    alias ke="kubectl exec -it"
-    alias kpf="kubectl port-forward"
-    alias kctx="kubectx"
-    alias kns="kubens"
-
-    alias gs="git status -sb"
-    alias gcm="git commit"
-    alias gsd="git status && git diff"
-    alias gst="git stash"
-    alias gpu="git push -u origin HEAD"
-    alias gcb="git checkout -b"
-    alias grhh="git reset --hard HEAD"
-    alias gcleanf="git clean -fd"
-    alias gpr="gh pr create"
-    alias gprs="gh pr list"
-    alias gprv="gh pr view"
-    alias glogg="git log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit"
-
-    alias ta="tmux -a"
-    alias tk="tmux kill-server"
-    alias tks="tmux kill-session -t"
-    alias tls="tmux ls"
-    alias tn="tmux new -s"
-    alias tt="tmux attach -t"
-
-    alias dprune='docker system prune -af --volumes'
-    alias dstop='docker ps -q 2>/dev/null | xargs -r docker stop 2>/dev/null'
-    alias drm='docker ps -aq 2>/dev/null | xargs -r docker rm 2>/dev/null'
-    alias drmi='docker images -q 2>/dev/null | xargs -r docker rmi 2>/dev/null'
-    alias dps='docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"'
-    alias dpsa='docker ps -a --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"'
-    alias dex='docker exec -it'
-    alias dlog='docker logs -f'
-
-    alias temporal='temporal --env dev'
-    function tailscale() {
-        /Applications/Tailscale.app/Contents/MacOS/Tailscale "$@"
-    }
-    alias ts='tailscale'
-    alias tssh='tailscale ssh'
-
-    alias cl="clear && ls"
-    alias crb="cargo run --bin"
-    alias ..="cd .."
-    alias ...="cd ../.."
-    alias ....="cd ../../.."
-    alias -- -="cd -"
-    alias so="source"
-    alias psa="ps aux | grep"
-    alias killp='killport'
-    alias ports="lsof -i -P -n | grep LISTEN 2>/dev/null || sudo lsof -i -P -n | grep LISTEN"
-    alias ip="curl -s ifconfig.me"
-    alias localip="ipconfig getifaddr en0"
-    alias myip="ifconfig | grep 'inet ' | grep -v 127.0.0.1 | awk '{print \$2}'"
-    alias flushdns="sudo dscacheutil -flushcache"
-
-    alias b='bmg'
-    alias bl='bml'
-    alias ba='bm'
-    alias bd='bmd'
-    alias claude='claude --dangerously-skip-permissions'
     
-    _bookmark_help() {
-        echo "Bookmark commands:"
-        echo "  bm [name] [path]  - Bookmark a directory (default: current dir)"
-        echo "  bmg [name]        - Go to bookmark (interactive if no name)"  
-        echo "  bml               - List all bookmarks"
-        echo "  bmd <name>        - Delete a bookmark"
-        echo ""
-        echo "Aliases:"
-        echo "  b  = bmg (jump)"
-        echo "  bl = bml (list)"
-        echo "  ba = bm  (add)"
-        echo "  bd = bmd (delete)"
-    }
 
-    mkcd() {
-        if [[ -z "$1" ]]; then
-            echo "Usage: mkcd 'directory'" >&2
-            return 1
-        fi
-        mkdir -p "$1" && cd "$1"
-    }
-
-    kr() {
-        kubectl delete pod "$@" && kubectl get pods -w
-    }
-
-    dbp() {
-        if [[ -z "$1" ]]; then
-            echo "Usage: dbp 'image-name'" >&2
-            return 1
-        fi
-        docker build -t "ghcr.io/$1" . && docker push "ghcr.io/$1"
-    }
-
-    sizeof() {
-        if [[ -z "$1" ]]; then
-            du -sh .
-        else
-            du -sh "$1"
-        fi
-    }
-
-    killport() {
-        if [[ -z "$1" ]]; then
-            echo "Usage: killport 'port'"
-            return 1
-        fi
-        if ! [[ "$1" =~ ^[0-9]+$ ]]; then
-            echo "Error: Port must be a number"
-            return 1
-        fi
-        local pids=$(lsof -ti:$1 2>/dev/null)
-        if [[ -n "$pids" ]]; then
-            echo "$pids" | xargs kill -9 2>/dev/null && echo "Killed processes on port $1"
-        else
-            echo "No process found on port $1"
-        fi
-    }
-
-    gclone() {
-        if [[ -z "$1" ]]; then
-            echo "Usage: gclone 'repo-url'"
-            return 1
-        fi
-        git clone "$1" && cd "$(basename "$1" .git)"
-    }
-
-    take() {
-        mkdir -p "$@" && cd "${@:$#}"
-    }
-
-    export BOOKMARKS_FILE="${BOOKMARKS_FILE:-$HOME/.config/zsh/bookmarks}"
-    [[ ! -f "$BOOKMARKS_FILE" ]] && mkdir -p "$(dirname "$BOOKMARKS_FILE")" && touch "$BOOKMARKS_FILE"
-
-    BM_FZF_OPTS="${FZF_DEFAULT_OPTS:-} --height=70% --layout=reverse --info=inline --border=rounded --margin=1,2 --padding=1"
     
-    if [[ -t 1 ]] && [[ "${TERM}" != "dumb" ]] && command -v tput >/dev/null 2>&1 && [[ $(tput colors) -ge 8 ]]; then
-        BM_COLOR_ENABLED=1
-        BM_COLOR_HEADER="\033[1;35m"
-        BM_COLOR_NAME="\033[36m"
-        BM_COLOR_PATH="\033[90m"
-        BM_COLOR_SUCCESS="\033[32m"
-        BM_COLOR_UPDATE="\033[33m"
-        BM_COLOR_ERROR="\033[31m"
-        BM_COLOR_RESET="\033[0m"
-    else
-        BM_COLOR_ENABLED=0
-        BM_COLOR_HEADER=""
-        BM_COLOR_NAME=""
-        BM_COLOR_PATH=""
-        BM_COLOR_SUCCESS=""
-        BM_COLOR_UPDATE=""
-        BM_COLOR_ERROR=""
-        BM_COLOR_RESET=""
-    fi
 
-    bm() {
-        if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
-            _bookmark_help
-            return 0
-        fi
-        local name="${1:-$(basename "$PWD")}"
-        local path="${2:-$PWD}"
-        if grep -q "^$name=" "$BOOKMARKS_FILE" 2>/dev/null; then
-            if [[ "$OSTYPE" == "darwin"* ]]; then
-                sed -i '' "s|^$name=.*|$name=$path|" "$BOOKMARKS_FILE"
-            else
-                sed -i "s|^$name=.*|$name=$path|" "$BOOKMARKS_FILE"
-            fi
-            echo -e "${BM_COLOR_UPDATE}📝 Updated bookmark:${BM_COLOR_RESET} ${BM_COLOR_NAME}$name${BM_COLOR_RESET} → $path"
-        else
-            echo "$name=$path" >> "$BOOKMARKS_FILE"
-            echo -e "${BM_COLOR_SUCCESS}✅ Added bookmark:${BM_COLOR_RESET} ${BM_COLOR_NAME}$name${BM_COLOR_RESET} → $path"
-        fi
-    }
-
-    bml() {
-        if [[ ! -s "$BOOKMARKS_FILE" ]]; then
-            echo "No bookmarks saved yet. Use 'bm name' to add one."
-            return 1
-        fi
-        echo -e "${BM_COLOR_HEADER}📑 Bookmarks${BM_COLOR_RESET}"
-        echo -e "${BM_COLOR_PATH}$(printf '─%.0s' {1..40})${BM_COLOR_RESET}"
-        while IFS='=' read -r name path; do
-            printf "${BM_COLOR_NAME}%-20s${BM_COLOR_RESET} ${BM_COLOR_PATH}→${BM_COLOR_RESET} %s\n" "$name" "$path"
-        done < "$BOOKMARKS_FILE"
-    }
-
-    bmd() {
-        if [[ -z "$1" ]]; then
-            echo -e "${BM_COLOR_ERROR}❌ Usage:${BM_COLOR_RESET} bmd 'bookmark-name'"
-            return 1
-        fi
-        if grep -q "^$1=" "$BOOKMARKS_FILE" 2>/dev/null; then
-            if [[ "$OSTYPE" == "darwin"* ]]; then
-                sed -i '' "/^$1=/d" "$BOOKMARKS_FILE"
-            else
-                sed -i "/^$1=/d" "$BOOKMARKS_FILE"
-            fi
-            echo -e "${BM_COLOR_ERROR}🗑️  Deleted bookmark:${BM_COLOR_RESET} ${BM_COLOR_NAME}$1${BM_COLOR_RESET}"
-        else
-            echo -e "${BM_COLOR_ERROR}❌ Bookmark not found:${BM_COLOR_RESET} $1"
-            return 1
-        fi
-    }
-
-    for cmd in bmg bmd; do
-        alias $cmd >/dev/null 2>&1 && unalias $cmd
-    done
     
-    function bmg() {
-        if [[ -n "$1" ]]; then
-            local bookmark_path=$(grep "^$1=" "$BOOKMARKS_FILE" 2>/dev/null | cut -d= -f2)
-            if [[ -n "$bookmark_path" ]]; then
-                cd "$bookmark_path"
-            else
-                echo "Bookmark not found: $1"
-                return 1
-            fi
-        else
-            if [[ ! -s "$BOOKMARKS_FILE" ]]; then
-                echo "No bookmarks saved yet. Use 'bm name' to add one."
-                return 1
-            fi
-            local selected=$(awk -F= '{printf "%-20s %s\n", $1, $2}' "$BOOKMARKS_FILE" | \
-                FZF_DEFAULT_OPTS="$BM_FZF_OPTS" fzf \
-                    --preview 'echo -e "'${BM_COLOR_HEADER}'📁 Directory Preview'${BM_COLOR_RESET}'\n'${BM_COLOR_PATH}'Path: {2}'${BM_COLOR_RESET}'"; echo; eza -la --icons --group-directories-first --color=always {2} 2>/dev/null || ls -la {2} 2>/dev/null' \
-                    --preview-window=right:60%:wrap:border-left \
-                    --prompt='Bookmarks ❯ ' \
-                    --header=$'Select bookmark to jump to\n' \
-                    --bind='ctrl-d:reload(awk -F= "{printf \"%-20s %s\\n\", \$1, \$2}" "'$BOOKMARKS_FILE'")' | \
-                awk '{print $2}')
-            [[ -n "$selected" ]] && cd "$selected"
-        fi
-    }
 
+    
 
-    fname() {
-        if [[ -z "$1" ]]; then
-            echo "Usage: fname 'pattern'"
-            return 1
-        fi
-        find . -name "*$1*" -type f 2>/dev/null
-    }
+    
 
-    dname() {
-        if [[ -z "$1" ]]; then
-            echo "Usage: dname 'pattern'"
-            return 1
-        fi
-        find . -name "*$1*" -type d 2>/dev/null
-    }
+    
 
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        ql() {
-            qlmanage -p "$@" &>/dev/null &
+    
+    if [[ "$OSTYPE" == "darwin"* ]] && [[ -x /Applications/Tailscale.app/Contents/MacOS/Tailscale ]]; then
+        function tailscale() {
+            /Applications/Tailscale.app/Contents/MacOS/Tailscale "$@"
         }
-
-        finder() {
-            open "${1:-.}"
-        }
-
-        sysinfo() {
-            echo "macOS: $(sw_vers -productVersion)"
-            echo "Build: $(sw_vers -buildVersion)"
-            echo "Kernel: $(uname -r)"
-            echo "Architecture: $(uname -m)"
-            echo "CPU: $(sysctl -n machdep.cpu.brand_string)"
-            echo "Memory: $(( $(sysctl -n hw.memsize) / 1024 / 1024 / 1024 )) GB"
-            echo "Disk: $(df -h / | awk 'NR==2 {print $4 " free of " $2}')"
-        }
+        alias ts='tailscale'
+        alias tssh='tailscale ssh'
+    elif command -v tailscale >/dev/null 2>&1; then
+        alias ts='tailscale'
+        alias tssh='tailscale ssh'
     fi
 
-    if [[ ! -d "$HOME/.history_backup" ]]; then
-        mkdir -p "$HOME/.history_backup"
-    fi
+    
+    
+    
 
-    if [[ ! -f "$HOME/.history_backup/last_backup" ]] || \
-       [[ $(find "$HOME/.history_backup/last_backup" -mtime +7 2>/dev/null) ]]; then
-        cp "$HISTFILE" "$HOME/.history_backup/zsh_history_$(date +%Y%m%d_%H%M%S)" 2>/dev/null || true
-        touch "$HOME/.history_backup/last_backup"
-        ls -t "$HOME/.history_backup"/zsh_history_* 2>/dev/null | tail -n +11 | xargs rm -f 2>/dev/null || true
-    fi
+    
 
-    h() {
-        if [[ -z "$1" ]]; then
-            history 1
-        else
-            history 1 | grep -i "$@"
-        fi
-    }
+    
 
-    hi() {
-        local selected=$(history -n 1 | tac | awk '!seen[$0]++' | \
-            fzf --preview 'echo {}' --preview-window=up:3:wrap \
-                --bind 'ctrl-y:execute-silent(echo {} | pbcopy)+abort' \
-                --header 'Press CTRL-Y to copy command')
-        if [[ -n "$selected" ]]; then
-            print -z "$selected"
-        fi
-    }
+
+    
+
+    
+
+    
     ZSH_AUTOSUGGEST_STRATEGY=(history completion)
     ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20
     ZSH_AUTOSUGGEST_USE_ASYNC=1
     ZSH_AUTOSUGGEST_MANUAL_REBIND=1
 
-    zstyle ':fzf-tab:*' fzf-command fzf
-    zstyle ':fzf-tab:*' fzf-preview ''
-    zstyle ':fzf-tab:*' fzf-flags '--color=fg:#797593,fg+:#575279,bg:#faf4ed,bg+:#f2e9de,hl:#d7827e,hl+:#d7827e,info:#56949f,marker:#b4637a,prompt:#286983,spinner:#ea9d34,pointer:#907aa9,header:#907aa9,border:#9893a5,gutter:#faf4ed'
-    zstyle ':fzf-tab:*' fzf-bindings 'tab:accept'
-    zstyle ':fzf-tab:*' accept-line enter
+    
 
-    _ssh_config_hosts() {
-        local config_files=(~/.ssh/config)
-        local h=()
-
-        if [[ -r ~/.ssh/config ]]; then
-            local includes=(${(f)"$(grep '^Include' ~/.ssh/config 2>/dev/null | awk '{print $2}' | sed "s|~|$HOME|g")"})
-            config_files+=($includes)
-        fi
-
-        for f in $config_files; do
-            if [[ -r "$f" ]]; then
-                h+=(${${${(@M)${(f)"$(cat "$f" 2>/dev/null)"}:#Host *}#Host }:#*[*?]*})
-            fi
-        done
-
-        h=(${(u)h})
-        echo $h
-    }
-
-    local ssh_hosts=($(_ssh_config_hosts))
-    if [[ ${#ssh_hosts[@]} -gt 0 ]]; then
-        zstyle ':completion:*:ssh:*' hosts $ssh_hosts
-        zstyle ':completion:*:scp:*' hosts $ssh_hosts
-        zstyle ':completion:*:rsync:*' hosts $ssh_hosts
-    fi
+    
 
 [ -f ~/.zshrc.local ] && source ~/.zshrc.local
+
+# Optional modular loader: source user modules without changing core behavior
+ZSH_EXTRA_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/zsh"
+if [[ -d "$ZSH_EXTRA_DIR/conf.d" ]]; then
+    for f in "$ZSH_EXTRA_DIR"/conf.d/*.zsh; do
+        [[ -r "$f" ]] && source "$f"
+    done
+fi
+# Machine-specific overrides
+[[ -r "$ZSH_EXTRA_DIR/local.zsh" ]] && source "$ZSH_EXTRA_DIR/local.zsh"
 
 if [[ ! -f "$HOME/.zshrc.zwc" || "$HOME/.zshrc" -nt "$HOME/.zshrc.zwc" ]]; then
     zcompile "$HOME/.zshrc" 2>/dev/null
@@ -665,28 +307,7 @@ if command -v zoxide >/dev/null 2>&1; then
     }
 fi
 
-if command -v compdef >/dev/null 2>&1; then
-    compdef k=kubectl
-    compdef lg=git
-    compdef v=nvim
-    compdef gs=git
-    compdef gco=git
-
-    compdef _tailscale tailscale
-    compdef ts=tailscale
-    compdef _op op
-
-    autoload -U +X bashcompinit && bashcompinit
-    if command -v terraform >/dev/null 2>&1; then
-        complete -o nospace -C "$(command -v terraform)" terraform
-    fi
-    if command -v vault >/dev/null 2>&1; then
-        complete -o nospace -C "$(command -v vault)" vault
-    fi
-    if command -v terragrunt >/dev/null 2>&1; then
-        complete -o nospace -C "$(command -v terragrunt)" terragrunt
-    fi
-fi
+ 
 if [[ -n "$ZSHRC_DEBUG" ]]; then
     echo "[$(date +%s.%N)] Finished zshrc"
     zprof

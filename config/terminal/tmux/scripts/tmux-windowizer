@@ -1,64 +1,64 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
-window_type="${1:-default}"
-window_name=""
-initial_command=""
+# Open a tmux window for a common task: git | test | server
+# Usage: tmux-windowizer <mode>
 
-case "$window_type" in
-    git)
-        window_name="git"
-        if command -v lazygit >/dev/null 2>&1; then
-            initial_command="lazygit"
-        else
-            initial_command="git status"
-        fi
-        ;;
-    test)
-        window_name="test"
-        if [[ -f "package.json" ]]; then
-            initial_command="npm test -- --watch"
-        elif [[ -f "Cargo.toml" ]]; then
-            initial_command="cargo watch -x test"
-        elif [[ -f "go.mod" ]]; then
-            initial_command="go test ./... -v"
-        elif [[ -f "pytest.ini" ]] || [[ -f "setup.py" ]] || [[ -f "pyproject.toml" ]]; then
-            initial_command="pytest --watch"
-        else
-            initial_command="echo 'No test runner detected. Configure your test command here.'"
-        fi
-        ;;
-    server)
-        window_name="server"
-        if [[ -f "package.json" ]]; then
-            if grep -q '"dev"' package.json 2>/dev/null; then
-                initial_command="npm run dev"
-            elif grep -q '"start"' package.json 2>/dev/null; then
-                initial_command="npm start"
-            else
-                initial_command="npm run"
-            fi
-        elif [[ -f "Cargo.toml" ]]; then
-            initial_command="cargo run"
-        elif [[ -f "go.mod" ]]; then
-            initial_command="go run ."
-        elif [[ -f "manage.py" ]]; then
-            initial_command="python manage.py runserver"
-        elif [[ -f "requirements.txt" ]] || [[ -f "pyproject.toml" ]]; then
-            initial_command="python -m http.server 8000"
-        elif [[ -f "docker-compose.yml" ]] || [[ -f "docker-compose.yaml" ]]; then
-            initial_command="docker-compose up"
-        else
-            initial_command="echo 'No server command detected. Configure your server command here.'"
-        fi
-        ;;
-    *)
-        echo "Usage: $0 [git|test|server]"
-        exit 1
-        ;;
-esac
-
-if tmux list-windows | grep -q "^[0-9]*: $window_name"; then
-    tmux select-window -t "$window_name"
-else
-    tmux new-window -n "$window_name" "$initial_command"
+mode=${1:-}
+if [[ -z "$mode" ]]; then
+  echo "Usage: tmux-windowizer <git|test|server>" >&2
+  exit 1
 fi
+
+detect_cmd() {
+  case "$mode" in
+    git)
+      if command -v lazygit >/dev/null 2>&1; then
+        echo "lazygit"
+      else
+        echo "git status; exec \${SHELL:-$SHELL}"
+      fi
+      ;;
+    test)
+      if [[ -f go.mod ]] && command -v go >/dev/null 2>&1; then
+        echo "go test ./..."
+      elif [[ -f Cargo.toml ]] && command -v cargo >/dev/null 2>&1; then
+        echo "cargo test"
+      elif [[ -f package.json ]]; then
+        echo "(command -v pnpm >/dev/null && pnpm test) || (command -v npm >/dev/null && npm test) || (command -v yarn >/dev/null && yarn test) || (echo 'No JS test script'; exec \${SHELL:-$SHELL})"
+      elif [[ -f pyproject.toml || -f pytest.ini || -f setup.cfg ]] && command -v pytest >/dev/null 2>&1; then
+        echo "pytest -q"
+      else
+        echo "echo 'No known test command'; exec \${SHELL:-$SHELL}"
+      fi
+      ;;
+    server)
+      if [[ -f Justfile || -f justfile ]] && command -v just >/dev/null 2>&1; then
+        echo "just dev || just start || just run || exec \${SHELL:-$SHELL}"
+      elif [[ -f package.json ]]; then
+        echo "(command -v pnpm >/dev/null && (pnpm dev || pnpm start)) || (command -v npm >/dev/null && (npm run dev || npm start)) || (command -v yarn >/dev/null && (yarn dev || yarn start)) || (echo 'No JS dev/start script'; exec \${SHELL:-$SHELL})"
+      elif [[ -f go.mod ]] && command -v go >/dev/null 2>&1; then
+        echo "go run ./..."
+      elif [[ -f Cargo.toml ]] && command -v cargo >/dev/null 2>&1; then
+        echo "cargo run"
+      else
+        echo "echo 'No known server command'; exec \${SHELL:-$SHELL}"
+      fi
+      ;;
+    *)
+      echo "echo 'Unknown mode: $mode'; exec \${SHELL:-$SHELL}"
+      ;;
+  esac
+}
+
+cmd=$(detect_cmd)
+window_name="$mode"
+
+if [[ -n "${TMUX:-}" ]]; then
+  # Open a new tmux window running the command from the current path
+  tmux new-window -n "$window_name" -c "$PWD" "$SHELL -lc \"$cmd\""
+else
+  # Not in tmux; just run the command in the current shell
+  exec $SHELL -lc "$cmd"
+fi
+

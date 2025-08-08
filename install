@@ -41,6 +41,11 @@ confirm() {
     local default="${2:-n}"
     local response
 
+    # Non-interactive mode: auto-yes
+    if [[ "${YES:-0}" == "1" || "${DOTFILES_YES:-0}" == "1" || "${NONINTERACTIVE:-0}" == "1" ]]; then
+        return 0
+    fi
+
     if [[ "$default" == "y" ]]; then
         prompt="$prompt [Y/n] "
     else
@@ -75,7 +80,19 @@ create_symlink() {
 
     backup_existing "$target"
 
-    rm -rf "$target"
+    # Safety guard: only remove targets under $HOME
+    local target_abs
+    target_abs="$(cd "$(dirname "$target")" 2>/dev/null && pwd)/$(basename "$target")"
+    case "$target_abs" in
+        "$HOME"/*)
+            ;;
+        *)
+            error "Refusing to modify path outside of HOME: $target_abs"
+            return 1
+            ;;
+    esac
+
+    rm -rf -- "$target"
 
     ln -sf "$source" "$target"
     success "Linked: $source -> $target"
@@ -98,6 +115,7 @@ install_dependencies() {
     local missing_deps=()
 
     check_dependency "git" || missing_deps+=("git")
+    check_dependency "curl" || missing_deps+=("curl")
     check_dependency "zsh" || missing_deps+=("zsh")
     check_dependency "tmux" || missing_deps+=("tmux")
     check_dependency "nvim" || missing_deps+=("neovim")
@@ -126,6 +144,10 @@ install_shell_config() {
     create_symlink "$DOTFILES_DIR/config/shell/zshrc" "$HOME/.zshrc"
 
     mkdir -p "$HOME/.config/zsh"
+    # Optional modular config directory
+    if [[ -d "$DOTFILES_DIR/config/shell/conf.d" ]]; then
+        create_symlink "$DOTFILES_DIR/config/shell/conf.d" "$HOME/.config/zsh/conf.d"
+    fi
 
     if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
         if confirm "Install Oh My Zsh?"; then
@@ -134,15 +156,15 @@ install_shell_config() {
             local custom_plugins="$HOME/.oh-my-zsh/custom/plugins"
 
             if [[ ! -d "$custom_plugins/zsh-autosuggestions" ]]; then
-                git clone https://github.com/zsh-users/zsh-autosuggestions "$custom_plugins/zsh-autosuggestions"
+                git clone --depth 1 --single-branch https://github.com/zsh-users/zsh-autosuggestions "$custom_plugins/zsh-autosuggestions"
             fi
 
             if [[ ! -d "$custom_plugins/fast-syntax-highlighting" ]]; then
-                git clone https://github.com/zdharma-continuum/fast-syntax-highlighting "$custom_plugins/fast-syntax-highlighting"
+                git clone --depth 1 --single-branch https://github.com/zdharma-continuum/fast-syntax-highlighting "$custom_plugins/fast-syntax-highlighting"
             fi
 
             if [[ ! -d "$custom_plugins/fzf-tab" ]]; then
-                git clone https://github.com/Aloxaf/fzf-tab "$custom_plugins/fzf-tab"
+                git clone --depth 1 --single-branch https://github.com/Aloxaf/fzf-tab "$custom_plugins/fzf-tab"
             fi
         fi
     fi
@@ -293,4 +315,3 @@ main() {
 }
 
 main "$@"
-
