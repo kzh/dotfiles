@@ -1,34 +1,65 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
-if [[ $# -eq 1 ]]; then
-    selected=$1
-else
-    selected=$(find ~/Code ~/Projects ~/.config ~/ -mindepth 1 -maxdepth 3 -type d 2>/dev/null | 
-        grep -v -E '(\.git|node_modules|dist|build|target|\.cache|\.local|\.cargo/registry|\.npm|\.vscode|\.idea)' |
-        sort -u |
-        fzf --preview 'eza -la --icons --group-directories-first {} 2>/dev/null || ls -la {} 2>/dev/null' \
-            --preview-window=right:50%:wrap \
-            --header 'Select project directory')
-fi
+# Simple tmux session picker that jumps to a project and (re)uses a session.
+# Defaults to projects under ~/Code/Repos/*/* but accepts a path argument.
 
-if [[ -z $selected ]]; then
-    exit 0
-fi
+PROJECT_ROOT="${PROJECT_ROOT:-$HOME/Code/Repos}"
 
-selected_name=$(basename "$selected" | tr . _)
-tmux_running=$(pgrep tmux)
+pick_dir() {
+  if [[ $# -gt 0 ]] && [[ -d "$1" ]]; then
+    echo "$(cd "$1" && pwd)"
+    return 0
+  fi
 
-if [[ -z $TMUX ]] && [[ -z $tmux_running ]]; then
-    tmux new-session -s $selected_name -c "$selected"
-    exit 0
-fi
+  if command -v fd >/dev/null 2>&1; then
+    mapfile -t dirs < <(fd . "$PROJECT_ROOT" -td -H -d 2 | sort)
+  else
+    mapfile -t dirs < <(find "$PROJECT_ROOT" -mindepth 2 -maxdepth 2 -type d 2>/dev/null | sort)
+  fi
 
-if ! tmux has-session -t=$selected_name 2> /dev/null; then
-    tmux new-session -ds $selected_name -c "$selected"
-fi
+  if [[ ${#dirs[@]} -eq 0 ]]; then
+    echo "No project directories found under $PROJECT_ROOT" >&2
+    exit 1
+  fi
 
-if [[ -z $TMUX ]]; then
-    tmux attach-session -t $selected_name
-else
-    tmux switch-client -t $selected_name
-fi
+  if command -v fzf >/dev/null 2>&1; then
+    local preview_cmd
+    if command -v eza >/dev/null 2>&1; then
+      preview_cmd='eza -la --icons --group-directories-first --color=always {1} 2>/dev/null || ls -la {1} 2>/dev/null'
+    else
+      preview_cmd='ls -la {1} 2>/dev/null'
+    fi
+    printf '%s\n' "${dirs[@]}" | FZF_DEFAULT_OPTS="${FZF_DEFAULT_OPTS:-} --height=70% --layout=reverse --border=rounded" fzf --prompt="Projects ❯ " --preview "$preview_cmd" --preview-window=right:60%:wrap:border-left
+  else
+    printf '%s\n' "${dirs[@]}" | tail -n +1 | head -n 1
+  fi
+}
+
+main() {
+  local dir
+  dir=$(pick_dir "${1:-}") || exit 1
+
+  # Sanitize session name from dir basename.
+  local name
+  name=$(basename "$dir" | tr ' .:/\\' '-' | tr -cd '[:alnum:]-_')
+  [[ -z "$name" ]] && name="session"
+
+  if tmux has-session -t "$name" 2>/dev/null; then
+    if [[ -n "${TMUX:-}" ]]; then
+      tmux switch-client -t "$name"
+    else
+      tmux attach -t "$name"
+    fi
+  else
+    if [[ -n "${TMUX:-}" ]]; then
+      tmux new-session -ds "$name" -c "$dir"
+      tmux switch-client -t "$name"
+    else
+      tmux new -s "$name" -c "$dir"
+    fi
+  fi
+}
+
+main "$@"
+
