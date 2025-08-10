@@ -1,6 +1,4 @@
 #!/usr/bin/env zsh
-
-# Kubernetes aliases
 alias k="kubectl"
 alias kp="kubectl get pods"
 alias kl="kubectl logs"

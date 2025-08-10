@@ -212,6 +212,7 @@ install_git_config() {
     create_symlink "$DOTFILES_DIR/config/git/gitignore_global" "$HOME/.gitignore_global"
 }
 
+
 install_homebrew_packages() {
     if [[ "$OSTYPE" == "darwin"* ]] && check_dependency "brew"; then
         if confirm "Install Homebrew packages from Brewfile?"; then

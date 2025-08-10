@@ -1,6 +1,4 @@
 #!/usr/bin/env zsh
-
-# Extra compdefs and bash-style completions for external tools
 if command -v compdef >/dev/null 2>&1; then
   compdef k=kubectl
   compdef lg=git

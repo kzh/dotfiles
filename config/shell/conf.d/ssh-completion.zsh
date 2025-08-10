@@ -1,6 +1,4 @@
 #!/usr/bin/env zsh
-
-# Populate ssh/scp/rsync host completion from ~/.ssh/config and includes
 _ssh_config_hosts() {
   local config_files=(~/.ssh/config)
   local h=()

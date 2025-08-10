@@ -61,3 +61,6 @@
 
 [maintenance]
 	repo = ~/Code/Repos/github.com/kzh/dotfiles
+[user]
+	name = Kevin
+	email = me@kzh.dev

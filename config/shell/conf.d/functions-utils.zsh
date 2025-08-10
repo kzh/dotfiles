@@ -1,6 +1,4 @@
 #!/usr/bin/env zsh
-
-# Utility functions
 extract() {
   if [ -f "$1" ]; then
     case "$1" in
@@ -32,9 +30,9 @@ replace() {
     return 1
   fi
   if [[ "$OSTYPE" == "darwin"* ]]; then
-    find . -type f -name "$3" -exec sed -i '' "s/$1/$2/g" {} +
+    find . -type f -name "$3" -exec env LC_ALL=C sed -i '' "s/$1/$2/g" {} +
   else
-    find . -type f -name "$3" -exec sed -i "s/$1/$2/g" {} +
+    find . -type f -name "$3" -exec env LC_ALL=C sed -i "s/$1/$2/g" {} +
   fi
 }
 
@@ -99,7 +97,6 @@ take() {
   mkdir -p "$@" && cd "${@:$#}"
 }
 
-# Docker helper: build and push to GHCR
 dbp() {
   if [[ -z "$1" ]]; then
     echo "Usage: dbp 'image-name'" >&2

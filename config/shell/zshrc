@@ -17,10 +17,14 @@ export XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 export XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
 
 export LESS='-R -X -i --mouse --wheel-lines=3 -P ?f%f:(stdin). ?lb%lb?L/%L.. [?eEOF:?pb%pb\%..]'
+# Enable mouse support in less for tmux
+if [ -n "$TMUX" ]; then
+    export LESS='-R --mouse --wheel-lines=3'
+fi
 export LESSCHARSET='utf-8'
 export PAGER='less'
 export MANPAGER='less'
-export DELTA_PAGER='less -R --mouse'
+export DELTA_PAGER='less -R'
 
 export PYTHONDONTWRITEBYTECODE=1
 export PIPENV_VENV_IN_PROJECT=1
@@ -31,9 +35,11 @@ export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 typeset -U PATH path
 
+# Ensure Bun uses standard install prefix under ~/.bun
+export BUN_INSTALL="$HOME/.bun"
+
 path=(
     $HOME/.local/bin
-    $HOME/.cache/.bun/bin
     $HOME/.bun/bin
     $HOME/.cargo/bin
     $GOBIN
@@ -148,7 +154,7 @@ fi
     bindkey '^P' history-substring-search-up
     bindkey '^N' history-substring-search-down
 
-    bindkey -s '^f' '~/.config/terminal/tmux/scripts/tmux-sessionizer\n'
+    bindkey -s '^f' '~/.config/tmux/scripts/tmux-sessionizer\n'
 
     [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
@@ -228,8 +234,17 @@ if [ -d "$HOME/Code/google-cloud-sdk" ] && [ ! "$(command -v gcloud)" ]; then
     }
 fi
 
-    # General aliases moved to modular file: ~/.config/zsh/conf.d/aliases.zsh
-    # Kept here intentionally blank to avoid duplication.
+    
+
+    
+
+# Prefer Python 3 tooling if available
+if command -v python3 >/dev/null 2>&1; then
+    alias python='python3'
+fi
+if command -v pip3 >/dev/null 2>&1; then
+    alias pip='pip3'
+fi
 
     
 
@@ -242,18 +257,7 @@ fi
     
 
     
-
     
-    if [[ "$OSTYPE" == "darwin"* ]] && [[ -x /Applications/Tailscale.app/Contents/MacOS/Tailscale ]]; then
-        function tailscale() {
-            /Applications/Tailscale.app/Contents/MacOS/Tailscale "$@"
-        }
-        alias ts='tailscale'
-        alias tssh='tailscale ssh'
-    elif command -v tailscale >/dev/null 2>&1; then
-        alias ts='tailscale'
-        alias tssh='tailscale ssh'
-    fi
 
     
     
@@ -311,4 +315,20 @@ fi
 if [[ -n "$ZSHRC_DEBUG" ]]; then
     echo "[$(date +%s.%N)] Finished zshrc"
     zprof
+fi
+
+# >>> uv-local-bin-first >>>
+export PATH="$HOME/.local/bin:$PATH"
+# <<< uv-local-bin-first <<<
+
+# Prefer user-local bin (puts uv shims first)
+# Idempotently prepend ~/.local/bin to PATH if not already present
+case ":$PATH:" in
+  *":$HOME/.local/bin:"*) ;;
+  *) export PATH="$HOME/.local/bin:$PATH" ;;
+esac
+
+# uv zsh completions
+if [ -f "$HOME/.zsh/uv-completions.zsh" ]; then
+  source "$HOME/.zsh/uv-completions.zsh"
 fi
