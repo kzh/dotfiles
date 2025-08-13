@@ -66,7 +66,8 @@ backup_existing() {
     local file="$1"
     if [[ -e "$file" && ! -L "$file" ]]; then
         mkdir -p "$BACKUP_DIR"
-        local backup_file="$BACKUP_DIR/$(basename "$file")"
+        local backup_file
+        backup_file="$BACKUP_DIR/$(basename "$file")"
         cp -r "$file" "$backup_file"
         log "Backed up existing file: $file -> $backup_file"
     fi
@@ -75,6 +76,11 @@ backup_existing() {
 create_symlink() {
     local source="$1"
     local target="$2"
+
+    if [[ ! -e "$source" ]]; then
+        warning "Source does not exist, skipping link: $source -> $target"
+        return 0
+    fi
 
     mkdir -p "$(dirname "$target")"
 

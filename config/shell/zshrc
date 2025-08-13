@@ -63,10 +63,25 @@ export FZF_DEFAULT_OPTS="
 	--color=border:#9893a5
 	--color=gutter:#faf4ed"
 
-if command -v fd &> /dev/null; then
+# fzf: prefer ripgrep for file search (Ctrl‑T)
+if command -v rg &> /dev/null; then
+    # Fast file listing with ripgrep, including hidden files but excluding .git
+    export FZF_DEFAULT_COMMAND='rg --files --hidden --follow --glob "!.git/*"'
+    export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+    # Directory search: use fd if available for ALT‑C; otherwise fallback to find
+    if command -v fd &> /dev/null; then
+        export FZF_ALT_C_COMMAND='fd --type d --hidden --follow --exclude .git'
+    else
+        export FZF_ALT_C_COMMAND='find -L . -type d -not -path "*/.git/*"'
+    fi
+elif command -v fd &> /dev/null; then
     export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
     export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
     export FZF_ALT_C_COMMAND='fd --type d --hidden --follow --exclude .git'
+else
+    export FZF_DEFAULT_COMMAND='find -L . -type f -not -path "*/.git/*"'
+    export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+    export FZF_ALT_C_COMMAND='find -L . -type d -not -path "*/.git/*"'
 fi
 HISTFILE="${HISTFILE:-$HOME/.zsh_history}"
 HISTSIZE=100000
@@ -156,7 +171,29 @@ fi
 
     bindkey -s '^f' '~/.config/tmux/scripts/tmux-sessionizer\n'
 
-    [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+    # Load fzf keybindings (Ctrl‑T, Alt‑C, Ctrl‑R). Prefer ~/.fzf.zsh; fallback to Homebrew path.
+    if [ -f ~/.fzf.zsh ]; then
+        source ~/.fzf.zsh
+    else
+        if command -v brew >/dev/null 2>&1; then
+            # Key bindings are sufficient to restore Ctrl‑T; completions are optional
+            FZF_HOMEBREW_PREFIX="$(brew --prefix 2>/dev/null)"
+            [ -f "$FZF_HOMEBREW_PREFIX/opt/fzf/shell/key-bindings.zsh" ] && source "$FZF_HOMEBREW_PREFIX/opt/fzf/shell/key-bindings.zsh"
+            [ -f "$FZF_HOMEBREW_PREFIX/opt/fzf/shell/completion.zsh" ] && source "$FZF_HOMEBREW_PREFIX/opt/fzf/shell/completion.zsh"
+            unset FZF_HOMEBREW_PREFIX
+        fi
+    fi
+    # Last-resort fallback: define a minimal Ctrl‑T widget if bindings not provided
+    if ! whence -w fzf-file-widget >/dev/null 2>&1 && command -v fzf >/dev/null 2>&1; then
+        fzf__ctrl_t_widget() {
+            local selected
+            selected=$(eval "$FZF_CTRL_T_COMMAND" 2>/dev/null | fzf ${FZF_DEFAULT_OPTS:+$FZF_DEFAULT_OPTS} --height=40% --reverse --multi) || return
+            LBUFFER+="${(j: :)selected}"
+            zle redisplay
+        }
+        zle -N fzf-file-widget fzf__ctrl_t_widget
+        bindkey '^T' fzf-file-widget
+    fi
 
     if command -v direnv >/dev/null 2>&1; then
         _direnv_hook() {
@@ -318,15 +355,12 @@ if [[ -n "$ZSHRC_DEBUG" ]]; then
 fi
 
 # >>> uv-local-bin-first >>>
-export PATH="$HOME/.local/bin:$PATH"
-# <<< uv-local-bin-first <<<
-
-# Prefer user-local bin (puts uv shims first)
-# Idempotently prepend ~/.local/bin to PATH if not already present
+# Prefer user-local bin (puts uv shims first) — idempotent
 case ":$PATH:" in
   *":$HOME/.local/bin:"*) ;;
   *) export PATH="$HOME/.local/bin:$PATH" ;;
 esac
+# <<< uv-local-bin-first <<<
 
 # uv zsh completions
 if [ -f "$HOME/.zsh/uv-completions.zsh" ]; then

@@ -8,7 +8,7 @@ PROJECT_ROOT="${PROJECT_ROOT:-$HOME/Code/Repos}"
 
 pick_dir() {
   if [[ $# -gt 0 ]] && [[ -d "$1" ]]; then
-    echo "$(cd "$1" && pwd)"
+    cd "$1" && pwd
     return 0
   fi
 
@@ -62,4 +62,3 @@ main() {
 }
 
 main "$@"
-

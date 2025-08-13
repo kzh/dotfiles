@@ -143,6 +143,8 @@ brew "redis", restart_service: :changed
 brew "ripgrep"
 # Extremely fast Python linter, written in Rust
 brew "ruff"
+# Static analysis for shell scripts
+brew "shellcheck"
 # Modern Day Portscanner
 brew "rustscan"
 # Rust toolchain installer
