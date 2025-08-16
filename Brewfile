@@ -75,6 +75,8 @@ brew "ffmpeg"
 brew "fish"
 # Command-line fuzzy finder written in Go
 brew "fzf"
+# OpenAI Codex CLI (terminal coding agent)
+brew "codex"
 # GitHub command-line tool
 brew "gh"
 # Distributed revision control system

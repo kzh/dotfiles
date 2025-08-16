@@ -218,6 +218,27 @@ install_git_config() {
     create_symlink "$DOTFILES_DIR/config/git/gitignore_global" "$HOME/.gitignore_global"
 }
 
+install_eza_theme() {
+    log "Installing eza theme..."
+
+    local source_theme="$DOTFILES_DIR/config/eza/theme.yml"
+    if [[ ! -f "$source_theme" ]]; then
+        warning "eza theme source not found; skipping"
+        return 0
+    fi
+
+    local target_dir
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS default eza config directory
+        target_dir="$HOME/Library/Application Support/eza"
+    else
+        # Linux / XDG default
+        target_dir="$CONFIG_DIR/eza"
+    fi
+
+    create_symlink "$source_theme" "$target_dir/theme.yml"
+}
+
 
 install_homebrew_packages() {
     if [[ "$OSTYPE" == "darwin"* ]] && check_dependency "brew"; then
@@ -281,6 +302,7 @@ main() {
     install_terminal_config
     install_editor_config
     install_git_config
+    install_eza_theme
 
     install_homebrew_packages
     setup_macos_defaults

@@ -7,6 +7,7 @@ These dotfiles are mostly generated using Claude Code and OpenAI Codex CLI.
 - **Shell**: Optimized ZSH configuration with Oh My Zsh and custom plugins
 - **Terminal**: Tmux with Rose Pine Dawn theme and enhanced keybindings
 - **Terminal Emulator**: Ghostty configuration with Rose Pine Dawn theme
+- **File Listing**: eza with Rosé Pine Dawn theme
 - **Editor**: Neovim setup based on kickstart.nvim with LSP, treesitter, and modern plugins
 - **Version Control**: Git configuration with sensible defaults and delta integration
 - **Package Management**: Organized Brewfile for easy software installation
@@ -25,6 +26,7 @@ These dotfiles are mostly generated using Claude Code and OpenAI Codex CLI.
 - Directory jumping with Zoxide
 - Directory bookmarks system with fzf integration
 - Rose Pine Dawn theme for FZF
+- eza aliases with icons, directories-first, and Rosé Pine Dawn theme
 
 ### Terminal (Tmux)
 
@@ -167,10 +169,12 @@ dotfiles/
     ├── shell/
     │   ├── completions/       # 35+ CLI tools
     │   └── zshrc
-    └── terminal/
-        ├── ghostty/config
-        ├── tmux/scripts/
-        └── tmux.conf
+    ├── terminal/
+    │   ├── ghostty/config
+    │   ├── tmux/scripts/
+    │   └── tmux.conf
+    └── eza/
+        └── theme.yml           # Rosé Pine Dawn theme
 ```
 
 ## Justfile Tasks

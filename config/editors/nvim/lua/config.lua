@@ -294,3 +294,17 @@ vim.api.nvim_create_autocmd('FileType', {
   end,
 })
 
+-- Suppress harmless LSP "ContentModified" errors for signature help
+do
+  local orig_sig = vim.lsp.handlers.signature_help
+  vim.lsp.handlers.signature_help = function(err, result, ctx, conf)
+    if err and (
+      err.code == vim.lsp.protocol.ErrorCodes.ContentModified or
+      err.code == -32801 or
+      (type(err) == 'table' and type(err.message) == 'string' and err.message:lower():find('content modified'))
+    ) then
+      return
+    end
+    return orig_sig(err, result, ctx, conf)
+  end
+end

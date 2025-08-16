@@ -20,7 +20,14 @@ return {
     event = 'VeryLazy',
     dependencies = { 'MunifTanjim/nui.nvim' },
     opts = {
-      lsp = { override = { ['vim.lsp.util.convert_input_to_markdown_lines'] = true, ['vim.lsp.util.stylize_markdown'] = true, ['cmp.entry.get_documentation'] = true } },
+      lsp = {
+        override = {
+          ['vim.lsp.util.convert_input_to_markdown_lines'] = true,
+          ['vim.lsp.util.stylize_markdown'] = true,
+          ['cmp.entry.get_documentation'] = false,
+        },
+        signature = { enabled = false },
+      },
       presets = { bottom_search = true, command_palette = true, long_message_to_split = true, inc_rename = true },
     },
   },
@@ -47,7 +54,28 @@ return {
   { 'tpope/vim-repeat', event = 'VeryLazy' },
   { 'tpope/vim-unimpaired', event = 'VeryLazy' },
   { 'kylechui/nvim-surround', version = '*', event = 'VeryLazy', opts = {} },
-  { 'github/copilot.vim', event = 'InsertEnter' },
+  {
+    'zbirenbaum/copilot.lua',
+    event = 'VimEnter',
+    opts = {
+      suggestion = {
+        enabled = true,
+        auto_trigger = true,
+        debounce = 75,
+        keymap = {
+          accept = false,
+          accept_word = '<C-Right>',
+          accept_line = '<C-Down>',
+          next = '<M-]>',
+          prev = '<M-[>',
+          dismiss = '<C-]>',
+        },
+      },
+      panel = { enabled = false },
+      -- Auto-detect Node.js path; fallback to 'node' if not found
+      copilot_node_command = (vim.fn.exepath('node') ~= '' and vim.fn.exepath('node')) or 'node',
+    },
+  },
   {
     'folke/ts-comments.nvim',
     opts = {},
@@ -76,7 +104,7 @@ return {
 
   { 'b0o/schemastore.nvim' },
   { 'folke/lazydev.nvim', ft = 'lua', opts = {} },
-  { 'ray-x/lsp_signature.nvim', event = 'VeryLazy', opts = {} },
+  { 'ray-x/lsp_signature.nvim', event = 'InsertEnter', opts = {} },
   { 'smjonas/inc-rename.nvim', cmd = 'IncRename', config = true },
   {
     'stevearc/conform.nvim',
@@ -202,4 +230,3 @@ return {
   },
 
 }
-
