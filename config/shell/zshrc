@@ -16,6 +16,10 @@ export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 export XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 export XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
 
+# Centralize Python bytecode cache
+export PYTHONPYCACHEPREFIX="$HOME/.cache/python/"
+[[ ! -d "$HOME/.cache/python" ]] && mkdir -p "$HOME/.cache/python"
+
 export LESS='-R -X -i --mouse --wheel-lines=3 -P ?f%f:(stdin). ?lb%lb?L/%L.. [?eEOF:?pb%pb\%..]'
 # Enable mouse support in less for tmux
 if [ -n "$TMUX" ]; then
@@ -26,7 +30,6 @@ export PAGER='less'
 export MANPAGER='less'
 export DELTA_PAGER='less -R'
 
-export PYTHONDONTWRITEBYTECODE=1
 export PIPENV_VENV_IN_PROJECT=1
 
 export GPG_TTY=$(tty)

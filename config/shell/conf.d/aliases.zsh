@@ -7,8 +7,7 @@ if command -v eza >/dev/null 2>&1; then
   alias ls="eza --icons --group-directories-first"
   alias ll="eza -la --icons --group-directories-first"
   alias la="eza -a --icons --group-directories-first"
-  alias lt="eza --tree --icons"
-  alias llt="eza -la --tree --icons --level=2"
+  alias lt="eza -laT --icons -L 4 --git-ignore -I node_modules -I dist -I target"
 else
   alias ll="ls -la"
   alias la="ls -a"
