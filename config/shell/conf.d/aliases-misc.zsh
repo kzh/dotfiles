@@ -18,12 +18,14 @@ ports() {
   else
     cmd='netstat -an | grep LISTEN'
   fi
-  eval "$cmd" 2>/dev/null || eval "sudo $cmd"
+  eval "$cmd" 2>/dev/null || {
+    echo "(hint) ports may require elevated privileges for full results" >&2
+    return 1
+  }
 }
-alias ip="curl -s ifconfig.me"
+alias ip="curl -fsSL https://ifconfig.me"
 
-alias temporal='temporal'
 alias tmp='temporal'
-alias claude='claude --dangerously-skip-permissions'
-alias csr='cursor-agent'
-alias codex='codex --yolo --search'
+command -v claude >/dev/null 2>&1 && alias claude='claude --dangerously-skip-permissions'
+command -v cursor-agent >/dev/null 2>&1 && alias csr='cursor-agent'
+command -v codex >/dev/null 2>&1 && alias codex='codex --yolo --search'

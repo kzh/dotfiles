@@ -5,7 +5,7 @@ local bookmarks_file="${BOOKMARKS_FILE:-$HOME/.config/zsh/bookmarks}"
 
 _bookmarks() {
     local cmd="$words[1]"
-    
+
     case "$cmd" in
         bm|ba)
             _arguments \

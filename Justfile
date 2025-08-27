@@ -1,7 +1,7 @@
 set shell := ["bash", "-c"]
 
 bootstrap:
-	YES=1 DOTFILES_YES=1 NONINTERACTIVE=1 ./install
+	./install -y
 
 brew:
 	brew bundle --file=Brewfile
@@ -11,13 +11,22 @@ lint:
 	set -euo pipefail; \
 	if command -v shellcheck >/dev/null; then \
 	  echo "Running shellcheck..."; \
-	  shellcheck -S style install || true; \
+	  targets=(install); \
+	  for f in config/terminal/tmux/scripts/* scripts/*; do \
+	    [[ -e "$f" ]] || continue; \
+	    [[ -f "$f" ]] && targets+=("$f"); \
+	  done; \
+	  shellcheck -S style "${targets[@]}" || true; \
 	else \
 	  echo "shellcheck not installed; skipping"; \
 	fi; \
 	if command -v zsh >/dev/null; then \
-	  echo "Checking zshrc syntax..."; \
+	  echo "Checking zsh syntax..."; \
 	  zsh -n config/shell/zshrc || true; \
+	  for f in config/shell/conf.d/*.zsh; do \
+	    [[ -f "$f" ]] || continue; \
+	    zsh -n "$f" || true; \
+	  done; \
 	else \
 	  echo "zsh not installed; skipping zshrc syntax check"; \
 	fi

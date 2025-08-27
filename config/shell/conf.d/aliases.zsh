@@ -37,6 +37,6 @@ alias path='print -l $path'
 alias reload='exec $SHELL -l'
 alias du='du -h'
 alias df='df -h'
-alias free='free -h'
+command -v free >/dev/null 2>&1 && alias free='free -h'
 
 command -v zoxide >/dev/null 2>&1 && alias j='z'

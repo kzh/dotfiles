@@ -42,7 +42,8 @@ main() {
 
   # Sanitize session name from dir basename.
   local name
-  name=$(basename "$dir" | tr ' .:/\\' '-' | tr -cd '[:alnum:]-_')
+  # Sanitize: keep only [A-Za-z0-9_-], convert others to '-'
+  name=$(basename "$dir" | tr -c '[:alnum:]_-' '-' | tr -s '-')
   [[ -z "$name" ]] && name="session"
 
   if tmux has-session -t "$name" 2>/dev/null; then

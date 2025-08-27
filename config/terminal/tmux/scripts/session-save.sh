@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 SESSION_NAME="${1:-$(tmux display-message -p '#S')}"
 LAYOUT_FILE="$HOME/.tmux/layouts/${SESSION_NAME}.yml"

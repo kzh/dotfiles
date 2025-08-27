@@ -20,6 +20,40 @@ YELLOW='\033[0;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
+print_usage() {
+    cat <<EOF
+Usage: ./install [options]
+
+Options:
+  -y, --yes              Run non-interactively; auto-approve all prompts
+  -n, --non-interactive  Same as --yes
+  -h, --help             Show this help message and exit
+
+Environment (legacy; still supported):
+  DOTFILES_YES=1         Auto-approve all prompts
+  YES=1                  Same as DOTFILES_YES (deprecated)
+  NONINTERACTIVE=1       Same as DOTFILES_YES (deprecated)
+EOF
+}
+
+parse_args() {
+    for arg in "$@"; do
+        case "$arg" in
+            -y|--yes|-n|--non-interactive)
+                # Canonicalize on DOTFILES_YES for internal checks
+                export DOTFILES_YES=1
+                export NONINTERACTIVE=1
+                ;;
+            -h|--help)
+                print_usage
+                exit 0
+                ;;
+            *)
+                ;;
+        esac
+    done
+}
+
 log() {
     echo -e "${BLUE}[$(date +'%Y-%m-%d %H:%M:%S')]${NC} $*"
 }
@@ -276,6 +310,7 @@ setup_macos_defaults() {
 }
 
 main() {
+    parse_args "$@"
     echo
     echo "╔══════════════════════════════════════════════════════════════════════════╗"
     echo "║                      Dotfiles Installation Started                        ║"

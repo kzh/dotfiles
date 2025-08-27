@@ -3,14 +3,26 @@ if [[ -n "$ZSHRC_DEBUG" ]]; then
     echo "[$(date +%s.%N)] Starting zshrc"
 fi
 
-export DOTFILES="$HOME/Code/Repos/github.com/kzh/dotfiles"
+# Resolve DOTFILES repo root from this file's path if not preset
+if [[ -z "${DOTFILES:-}" ]]; then
+  # Resolve the physical path to this file if it's a symlink into the repo
+  # ${(%):-%N} -> current file; :P -> physical path; :h -> dirname
+  __zsrc="${${(%):-%N}:P}"
+  if [[ -n "$__zsrc" && "$__zsrc" == */config/shell/zshrc ]]; then
+    DOTFILES="${__zsrc:h:h:h}"
+  elif [[ -d "$HOME/Code/Repos/github.com/kzh/dotfiles" ]]; then
+    DOTFILES="$HOME/Code/Repos/github.com/kzh/dotfiles"
+  fi
+  unset __zsrc
+fi
+export DOTFILES
 export EDITOR='nvim'
 export VISUAL="$EDITOR"
 export GOPATH="$HOME/Code/Go"
 export GOBIN="$GOPATH/bin"
 export NVM_DIR="$HOME/.nvm"
 export PULUMI_SKIP_UPDATE_CHECK=true
-export TERM=xterm-256color
+export TERM="${TERM:-xterm-256color}"
 
 export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 export XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
@@ -274,10 +286,6 @@ if [ -d "$HOME/Code/google-cloud-sdk" ] && [ ! "$(command -v gcloud)" ]; then
     }
 fi
 
-    
-
-    
-
 # Prefer Python 3 tooling if available
 if command -v python3 >/dev/null 2>&1; then
     alias python='python3'
@@ -285,43 +293,10 @@ fi
 if command -v pip3 >/dev/null 2>&1; then
     alias pip='pip3'
 fi
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    
-
-    
-    
-    
-
-    
-
-    
-
-
-    
-
-    
-
-    
-    ZSH_AUTOSUGGEST_STRATEGY=(history completion)
-    ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20
-    ZSH_AUTOSUGGEST_USE_ASYNC=1
-    ZSH_AUTOSUGGEST_MANUAL_REBIND=1
-
-    
-
-    
-
+ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20
+ZSH_AUTOSUGGEST_USE_ASYNC=1
+ZSH_AUTOSUGGEST_MANUAL_REBIND=1
 [ -f ~/.zshrc.local ] && source ~/.zshrc.local
 
 # Optional modular loader: source user modules without changing core behavior
@@ -351,7 +326,6 @@ if command -v zoxide >/dev/null 2>&1; then
     }
 fi
 
- 
 if [[ -n "$ZSHRC_DEBUG" ]]; then
     echo "[$(date +%s.%N)] Finished zshrc"
     zprof

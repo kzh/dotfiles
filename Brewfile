@@ -201,7 +201,7 @@ brew "oven-sh/bun/bun"
 brew "peak/tap/s5cmd"
 # Pulumi ESC - Manage Environments, Secrets, and Configuration
 brew "pulumi/tap/esc"
-# Pulumi - Modern Infrastructure as Code. Any cloud, any language 
+# Pulumi - Modern Infrastructure as Code. Any cloud, any language
 brew "pulumi/tap/pulumi"
 # Redpanda CLI & toolbox
 brew "redpanda-data/tap/redpanda"

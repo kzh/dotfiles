@@ -1244,7 +1244,7 @@ function __tmux-environment-variables() {
     esac
 
     case ${state} in
-        (name) 
+        (name)
             local -a vars_and_vals=( ${(@f)"$(command tmux 2>/dev/null show-env $dash_g)"} )
             local -a descriptions
             local k_v k v
