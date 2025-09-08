@@ -220,6 +220,7 @@ cask "font-noto-nerd-font"
 cask "font-sauce-code-pro-nerd-font"
 # Terminal emulator that uses platform-native UI and GPU acceleration
 cask "ghostty"
+cask "ngrok"
 # Full TeX Live distribution with GUI applications
 cask "mactex"
 # Replacement for Docker Desktop

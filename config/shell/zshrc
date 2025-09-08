@@ -33,9 +33,12 @@ export PYTHONPYCACHEPREFIX="$HOME/.cache/python/"
 [[ ! -d "$HOME/.cache/python" ]] && mkdir -p "$HOME/.cache/python"
 
 export LESS='-R -X -i --mouse --wheel-lines=3 -P ?f%f:(stdin). ?lb%lb?L/%L.. [?eEOF:?pb%pb\%..]'
-# Enable mouse support in less for tmux
+# Ensure mouse support in less within tmux without clobbering other flags
 if [ -n "$TMUX" ]; then
-    export LESS='-R --mouse --wheel-lines=3'
+    case ":$LESS:" in
+        *"--mouse"*) ;;
+        *) export LESS="$LESS --mouse" ;;
+    esac
 fi
 export LESSCHARSET='utf-8'
 export PAGER='less'
@@ -343,3 +346,7 @@ esac
 if [ -f "$HOME/.zsh/uv-completions.zsh" ]; then
   source "$HOME/.zsh/uv-completions.zsh"
 fi
+
+# Added by LM Studio CLI (lms)
+export PATH="$PATH:/Users/kevin/.lmstudio/bin"
+# End of LM Studio CLI section

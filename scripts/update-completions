@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Generate fresh zsh completion files into config/shell/completions/_*
+# Only touches tools found on PATH. Safe to run repeatedly.
+
+repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+out_dir="$repo_root/config/shell/completions"
+mkdir -p "$out_dir"
+
+log()  { printf "\033[34m==>\033[0m %s\n" "$*"; }
+warn() { printf "\033[33m[warn]\033[0m %s\n" "$*"; }
+ok()   { printf "\033[32m[ok]\033[0m %s\n" "$*"; }
+
+gen() {
+  local name="$1" path="$2"; shift 2
+  if [[ "$#" -eq 0 ]]; then
+    warn "no generator for $name"
+    return 0
+  fi
+  if ! "$@" >"$path" 2>/dev/null; then
+    warn "failed to generate $name completions (skipping)"
+    rm -f "$path"
+    return 0
+  fi
+  ok "wrote ${path#"$repo_root"/}"
+}
+
+log "Generating zsh completions into ${out_dir#"$repo_root"/}..."
+
+# gh
+if command -v gh >/dev/null 2>&1; then
+  gen gh "$out_dir/_gh" gh completion -s zsh
+fi
+
+# kubectl
+if command -v kubectl >/dev/null 2>&1; then
+  gen kubectl "$out_dir/_kubectl" kubectl completion zsh
+fi
+
+# helm
+if command -v helm >/dev/null 2>&1; then
+  gen helm "$out_dir/_helm" helm completion zsh
+fi
+
+# atuin
+if command -v atuin >/dev/null 2>&1; then
+  # Support older and newer flags
+  if atuin gen-completions --shell zsh >/dev/null 2>&1; then
+    gen atuin "$out_dir/_atuin" atuin gen-completions --shell zsh
+  elif atuin gen-completions -s zsh >/dev/null 2>&1; then
+    gen atuin "$out_dir/_atuin" atuin gen-completions -s zsh
+  fi
+fi
+
+# uv
+if command -v uv >/dev/null 2>&1; then
+  gen uv "$out_dir/_uv" uv generate-shell-completions zsh
+fi
+
+# bun
+if command -v bun >/dev/null 2>&1; then
+  gen bun "$out_dir/_bun" bun completions
+fi
+
+# tailscale
+if command -v tailscale >/dev/null 2>&1; then
+  # tailscale v1.64+ supports 'completion zsh'
+  if tailscale completion zsh >/dev/null 2>&1; then
+    gen tailscale "$out_dir/_tailscale" tailscale completion zsh
+  fi
+fi
+
+if command -v ngrok >/dev/null 2>&1; then
+  gen ngrok "$out_dir/_ngrok" ngrok completion
+fi
+
+# yq
+if command -v yq >/dev/null 2>&1; then
+  gen yq "$out_dir/_yq" yq shell-completion zsh
+fi
+
+# eza (prints to stdout in newer versions)
+if command -v eza >/dev/null 2>&1; then
+  if eza --completion zsh >/dev/null 2>&1; then
+    gen eza "$out_dir/_eza" eza --completion zsh
+  fi
+fi
+
+# ripgrep (rg)
+if command -v rg >/dev/null 2>&1; then
+  if rg --generate complete-zsh >/dev/null 2>&1; then
+    gen rg "$out_dir/_rg" rg --generate complete-zsh
+  fi
+fi
+
+log "Done. Review diffs and commit as needed."

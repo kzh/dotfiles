@@ -30,3 +30,7 @@ lint:
 	else \
 	  echo "zsh not installed; skipping zshrc syntax check"; \
 	fi
+
+# Refresh generated zsh completions for tools on PATH
+completions:
+	bash scripts/update-completions

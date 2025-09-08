@@ -1,6 +1,8 @@
 theme = rose-pine-dawn
 shell-integration = zsh
-font-size = 18
+font-size = 22
 font-family = JetBrainsMono Nerd Font Mono
+window-inherit-font-size = false
+window-save-state = never
 keybind = cmd+enter=ignore
 keybind = shift+enter=text:\n

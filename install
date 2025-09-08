@@ -273,6 +273,23 @@ install_eza_theme() {
     create_symlink "$source_theme" "$target_dir/theme.yml"
 }
 
+install_glow_config() {
+    log "Installing glow configuration..."
+
+    local source_style="$DOTFILES_DIR/config/terminal/glow/rose-pine-dawn.json"
+    if [[ ! -f "$source_style" ]]; then
+        warning "Glow style source not found; skipping"
+        return 0
+    fi
+
+    # Always use XDG path for glow
+    local glow_dir="$CONFIG_DIR/glow"
+    mkdir -p "$glow_dir"
+    create_symlink "$source_style" "$glow_dir/rose-pine-dawn.json"
+
+    success "Glow style linked. The shell config sets GLAMOUR_STYLE accordingly."
+}
+
 
 install_homebrew_packages() {
     if [[ "$OSTYPE" == "darwin"* ]] && check_dependency "brew"; then
@@ -338,6 +355,7 @@ main() {
     install_editor_config
     install_git_config
     install_eza_theme
+    install_glow_config
 
     install_homebrew_packages
     setup_macos_defaults
