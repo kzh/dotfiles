@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Explicit, one-time setup. Existing plugin checkouts are left alone.
+set -euo pipefail
+
+clone_pinned() {
+    local url="$1" target="$2" revision="$3"
+    [[ ! -d "$target/.git" ]] || return 0
+    if [[ -e "$target" ]]; then
+        printf 'Cannot clone into existing path: %s\n' "$target" >&2
+        return 1
+    fi
+    mkdir -p "$(dirname "$target")"
+    git clone --filter=blob:none --no-checkout --no-tags "$url" "$target"
+    git -C "$target" checkout --detach "$revision"
+}
+
+clone_pinned https://github.com/ohmyzsh/ohmyzsh.git "$HOME/.oh-my-zsh" \
+    b37dd49ca5bfe0d99b35607637152cb8cc8b29d7
+clone_pinned https://github.com/zsh-users/zsh-autosuggestions.git \
+    "$HOME/.oh-my-zsh/custom/plugins/zsh-autosuggestions" 85919cd1ffa7d2d5412f6d3fe437ebdbeeec4fc5
+clone_pinned https://github.com/zdharma-continuum/fast-syntax-highlighting.git \
+    "$HOME/.oh-my-zsh/custom/plugins/fast-syntax-highlighting" 3d574ccf48804b10dca52625df13da5edae7f553
+clone_pinned https://github.com/tmux-plugins/tpm.git "$HOME/.tmux/plugins/tpm" \
+    e261deb1b47614eed3400089ce7197dc68acc4eb
+printf 'Plugins ready. In tmux, press Ctrl-b then I to install tmux plugins.\n'

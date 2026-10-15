@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$repo_dir"
+bash_files=(install bin/check bin/setup-plugins tests/install.sh modules/terminal/tmux/scripts/tmux-sessionizer)
+for file in "${bash_files[@]}"; do
+    /bin/bash -n "$file"
+done
+shellcheck -x -S style "${bash_files[@]}"
+for file in home/.zshrc home/.zprofile modules/shell/zsh/{zshrc,zprofile,*.zsh,*.zsh.example}; do
+    zsh -n "$file"
+done
+ruby -c Brewfile >/dev/null
+jq empty modules/editor/nvim/lazy-lock.json
+yq eval '.' modules/cli/eza/theme.yml >/dev/null
+uv --config-file modules/cli/uv/uv.toml cache dir >/dev/null
+git config --file modules/git/gitconfig --list >/dev/null
+git config --file modules/git/gitconfig.local.example --list >/dev/null
+if command -v ghostty >/dev/null 2>&1; then
+    ghostty +validate-config --config-file=modules/terminal/ghostty/config
+fi
+
+/bin/bash tests/install.sh
+check_dir="$(mktemp -d "${TMPDIR:-/tmp}/dotfiles-check.XXXXXX")"
+cleanup() {
+    tmux -S "$check_dir/tmux.sock" kill-server >/dev/null 2>&1 || true
+    rm -rf -- "$check_dir"
+}
+trap cleanup EXIT
+
+# Load Zsh with temporary state and verify that local settings load last.
+mkdir -p "$check_dir/home/.config/zsh"
+[[ ! -d "$HOME/.oh-my-zsh" ]] || ln -s "$HOME/.oh-my-zsh" "$check_dir/home/.oh-my-zsh"
+printf 'export EDITOR=local-editor\n' > "$check_dir/home/.config/zsh/local.zsh"
+# The child shell intentionally expands EDITOR and DOTFILES after startup.
+# shellcheck disable=SC2016
+env -u ATUIN_SESSION -u ATUIN_SHLVL -u ATUIN_HISTORY_ID -u TMUX \
+    HOME="$check_dir/home" XDG_CONFIG_HOME="$check_dir/home/.config" \
+    XDG_CACHE_HOME="$check_dir/cache" XDG_DATA_HOME="$check_dir/data" XDG_STATE_HOME="$check_dir/state" \
+    ATUIN_CONFIG_DIR="$check_dir/home/.config/atuin" \
+    zsh -df -c 'unsetopt bgnice; source "$1/modules/shell/zsh/zshrc"; [[ "$EDITOR" == local-editor && "$DOTFILES" == "$1" ]]' zsh "$repo_dir"
+
+# Load native Neovim settings and parse plugin declarations without installing plugins.
+nvim --clean --headless -u NONE -i NONE -l /dev/stdin <<'LUA'
+assert(loadfile('modules/editor/nvim/init.lua'))
+vim.opt.rtp:prepend('modules/editor/nvim')
+require('config')
+require('plugins')
+LUA
+
+# Parse tmux configuration on a separate server, without running plugin hooks.
+tmux -S "$check_dir/tmux.sock" -f /dev/null new-session -d 'sleep 30'
+sed '/run-shell.*plugins\/tpm\/tpm/d' modules/terminal/tmux/tmux.conf |
+    tmux -S "$check_dir/tmux.sock" source-file -
+git diff --check HEAD --
+printf 'All checks passed.\n'

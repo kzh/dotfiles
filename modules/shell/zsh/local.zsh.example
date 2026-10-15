@@ -1,0 +1,7 @@
+# Machine-local Zsh settings.
+# The installer copies this template to $XDG_CONFIG_HOME/zsh/local.zsh once;
+# subsequent installs never overwrite that local file.
+
+# export EXAMPLE_TOKEN='load secrets from a password manager instead'
+# path+=("$HOME/path/to/a/machine-only/bin")
+# alias work='cd "$HOME/Code/Repos/example"'

@@ -13,3 +13,9 @@ Brewfile.lock.json
 *.swp
 *.swo
 *~
+
+# Neovim diagnostic log
+/nvim.log
+
+# Machine-local Zsh state must never be committed
+modules/shell/zsh/local.zsh

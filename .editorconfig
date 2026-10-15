@@ -10,11 +10,21 @@ trim_trailing_whitespace = true
 indent_style = space
 indent_size = 2
 
+# Extensionless Zsh entrypoints and Bash utilities.
+[{home/.zshrc,home/.zprofile,modules/shell/zsh/zshrc,modules/shell/zsh/zprofile,bin/*,modules/terminal/tmux/scripts/*}]
+indent_style = space
+indent_size = 2
+
+# These Bash scripts use four spaces.
+[{install,bin/check,bin/setup-plugins,tests/*.sh}]
+indent_style = space
+indent_size = 4
+
 [*.{yml,yaml}]
 indent_style = space
 indent_size = 2
 
-[*.{lua}]
+[*.lua]
 indent_style = space
 indent_size = 2
 

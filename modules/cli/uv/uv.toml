@@ -1,0 +1,2 @@
+# Prefer uv-managed interpreters when uv selects Python.
+python-preference = "only-managed"

@@ -1,408 +1,103 @@
 #!/usr/bin/env bash
-
 set -euo pipefail
 
-[[ "${DEBUG:-0}" == "1" ]] && set -x
+usage() {
+    printf 'Usage: ./install [-y|--yes] [-h|--help]\n'
+}
 
-if [[ -n "${BASH_SOURCE[0]}" ]] && [[ -f "${BASH_SOURCE[0]}" ]]; then
-    DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-else
-    echo "Error: This install script should be run from a cloned dotfiles repository" >&2
-    echo "Please run: git clone https://github.com/kzh/dotfiles.git" >&2
+assume_yes=0
+for arg in "$@"; do
+    case "$arg" in
+        -y|--yes) assume_yes=1 ;;
+        -h|--help) usage; exit 0 ;;
+        *) printf 'Unknown option: %s\n' "$arg" >&2; usage >&2; exit 2 ;;
+    esac
+done
+if [[ "$OSTYPE" != darwin* ]]; then
+    printf 'This dotfiles repo targets macOS only.\n' >&2
     exit 1
 fi
-BACKUP_DIR="$HOME/.dotfiles_backup/$(date +%Y%m%d_%H%M%S)"
-CONFIG_DIR="$HOME/.config"
+if [[ "$assume_yes" == 0 ]]; then
+    read -r -p 'Install configuration (existing files will be backed up)? [y/N] ' answer || exit 0
+    [[ "$answer" == [yY] ]] || exit 0
+fi
 
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-BLUE='\033[0;34m'
-NC='\033[0m'
+repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+home_dir="$(cd "$HOME" && pwd -P)"
+config_dir="${XDG_CONFIG_HOME:-$HOME/.config}"
+backup_dir="$HOME/.dotfiles_backup/$(date +%Y%m%d_%H%M%S)_$$"
 
-print_usage() {
-    cat <<EOF
-Usage: ./install [options]
-
-Options:
-  -y, --yes              Run non-interactively; auto-approve all prompts
-  -n, --non-interactive  Same as --yes
-  -h, --help             Show this help message and exit
-
-Environment (legacy; still supported):
-  DOTFILES_YES=1         Auto-approve all prompts
-  YES=1                  Same as DOTFILES_YES (deprecated)
-  NONINTERACTIVE=1       Same as DOTFILES_YES (deprecated)
-EOF
-}
-
-parse_args() {
-    for arg in "$@"; do
-        case "$arg" in
-            -y|--yes|-n|--non-interactive)
-                # Canonicalize on DOTFILES_YES for internal checks
-                export DOTFILES_YES=1
-                export NONINTERACTIVE=1
-                ;;
-            -h|--help)
-                print_usage
-                exit 0
-                ;;
-            *)
-                ;;
-        esac
-    done
-}
-
-log() {
-    echo -e "${BLUE}[$(date +'%Y-%m-%d %H:%M:%S')]${NC} $*"
-}
-
-success() {
-    echo -e "${GREEN}✓${NC} $*"
-}
-
-error() {
-    echo -e "${RED}✗${NC} $*" >&2
-}
-
-warning() {
-    echo -e "${YELLOW}⚠${NC} $*"
-}
-
-confirm() {
-    local prompt="${1:-Continue?}"
-    local default="${2:-n}"
-    local response
-
-    # Non-interactive mode: auto-yes
-    if [[ "${YES:-0}" == "1" || "${DOTFILES_YES:-0}" == "1" || "${NONINTERACTIVE:-0}" == "1" ]]; then
-        return 0
-    fi
-
-    if [[ "$default" == "y" ]]; then
-        prompt="$prompt [Y/n] "
-    else
-        prompt="$prompt [y/N] "
-    fi
-
-    read -p "$prompt" -n 1 -r response
-    echo
-
-    if [[ -z "$response" ]]; then
-        response="$default"
-    fi
-
-    [[ "$response" =~ ^[Yy]$ ]]
-}
-
-backup_existing() {
-    local file="$1"
-    if [[ -e "$file" && ! -L "$file" ]]; then
-        mkdir -p "$BACKUP_DIR"
-        local backup_file
-        backup_file="$BACKUP_DIR/$(basename "$file")"
-        cp -r "$file" "$backup_file"
-        log "Backed up existing file: $file -> $backup_file"
-    fi
-}
-
-create_symlink() {
-    local source="$1"
-    local target="$2"
-
-    if [[ ! -e "$source" ]]; then
-        warning "Source does not exist, skipping link: $source -> $target"
-        return 0
-    fi
-
-    mkdir -p "$(dirname "$target")"
-
-    backup_existing "$target"
-
-    # Safety guard: only remove targets under $HOME
-    local target_abs
-    target_abs="$(cd "$(dirname "$target")" 2>/dev/null && pwd)/$(basename "$target")"
-    case "$target_abs" in
-        "$HOME"/*)
-            ;;
-        *)
-            error "Refusing to modify path outside of HOME: $target_abs"
-            return 1
-            ;;
+prepare_target() {
+    local target="$1" parent backup
+    # Check the nearest existing parent before creating directories or moving files.
+    case "$target/" in
+        */../*|*/./*) printf 'Refusing ambiguous target: %s\n' "$target" >&2; exit 1 ;;
     esac
-
-    rm -rf -- "$target"
-
-    ln -sf "$source" "$target"
-    success "Linked: $source -> $target"
-}
-
-check_dependency() {
-    local cmd="$1"
-    if command -v "$cmd" &> /dev/null; then
-        success "$cmd is installed"
-        return 0
-    else
-        warning "$cmd is not installed"
-        return 1
-    fi
-}
-
-install_dependencies() {
-    log "Checking dependencies..."
-
-    local missing_deps=()
-
-    check_dependency "git" || missing_deps+=("git")
-    check_dependency "curl" || missing_deps+=("curl")
-    check_dependency "zsh" || missing_deps+=("zsh")
-    check_dependency "tmux" || missing_deps+=("tmux")
-    check_dependency "nvim" || missing_deps+=("neovim")
-
-    if [[ ${#missing_deps[@]} -gt 0 ]]; then
-        warning "Missing dependencies: ${missing_deps[*]}"
-
-        if [[ "$OSTYPE" == "darwin"* ]]; then
-            if check_dependency "brew"; then
-                if confirm "Install missing dependencies with Homebrew?"; then
-                    brew install "${missing_deps[@]}"
-                fi
-            else
-                error "Homebrew not found. Please install Homebrew first."
-                exit 1
-            fi
-        else
-            warning "Please install missing dependencies manually."
-        fi
-    fi
-}
-
-install_shell_config() {
-    log "Installing shell configuration..."
-
-    create_symlink "$DOTFILES_DIR/config/shell/zshrc" "$HOME/.zshrc"
-
-    mkdir -p "$HOME/.config/zsh"
-    # Optional modular config directory
-    if [[ -d "$DOTFILES_DIR/config/shell/conf.d" ]]; then
-        create_symlink "$DOTFILES_DIR/config/shell/conf.d" "$HOME/.config/zsh/conf.d"
-    fi
-
-    if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
-        if confirm "Install Oh My Zsh?"; then
-            sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-
-            local custom_plugins="$HOME/.oh-my-zsh/custom/plugins"
-
-            if [[ ! -d "$custom_plugins/zsh-autosuggestions" ]]; then
-                git clone --depth 1 --single-branch https://github.com/zsh-users/zsh-autosuggestions "$custom_plugins/zsh-autosuggestions"
-            fi
-
-            if [[ ! -d "$custom_plugins/fast-syntax-highlighting" ]]; then
-                git clone --depth 1 --single-branch https://github.com/zdharma-continuum/fast-syntax-highlighting "$custom_plugins/fast-syntax-highlighting"
-            fi
-
-            if [[ ! -d "$custom_plugins/fzf-tab" ]]; then
-                git clone --depth 1 --single-branch https://github.com/Aloxaf/fzf-tab "$custom_plugins/fzf-tab"
-            fi
-        fi
-    fi
-}
-
-install_terminal_config() {
-    log "Installing terminal configuration..."
-
-    create_symlink "$DOTFILES_DIR/config/terminal/tmux.conf" "$HOME/.tmux.conf"
-
-    mkdir -p "$CONFIG_DIR/tmux"
-    if [[ -d "$DOTFILES_DIR/config/terminal/tmux/scripts" ]]; then
-        create_symlink "$DOTFILES_DIR/config/terminal/tmux/scripts" "$CONFIG_DIR/tmux/scripts"
-        chmod +x "$DOTFILES_DIR/config/terminal/tmux/scripts"/* 2>/dev/null || true
-    fi
-
-    if [[ ! -d "$HOME/.tmux/plugins/tpm" ]]; then
-        if confirm "Install Tmux Plugin Manager?"; then
-            git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"
-            warning "Remember to press 'prefix + I' in tmux to install plugins"
-        fi
-    fi
-
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        local ghostty_dir="$HOME/Library/Application Support/com.mitchellh.ghostty"
-        mkdir -p "$ghostty_dir"
-        create_symlink "$DOTFILES_DIR/config/terminal/ghostty/config" "$ghostty_dir/config"
-    else
-        create_symlink "$DOTFILES_DIR/config/terminal/ghostty/config" "$CONFIG_DIR/ghostty/config"
-    fi
-}
-
-install_editor_config() {
-    log "Installing editor configuration..."
-
-    create_symlink "$DOTFILES_DIR/config/editors/nvim" "$CONFIG_DIR/nvim"
-
-    mkdir -p "$CONFIG_DIR/nvim/snippets"
-}
-
-install_git_config() {
-    log "Installing git configuration..."
-
-    create_symlink "$DOTFILES_DIR/config/git/gitconfig" "$HOME/.gitconfig"
-    create_symlink "$DOTFILES_DIR/config/git/gitignore_global" "$HOME/.gitignore_global"
-}
-
-install_eza_theme() {
-    log "Installing eza theme..."
-
-    local source_theme="$DOTFILES_DIR/config/eza/theme.yml"
-    if [[ ! -f "$source_theme" ]]; then
-        warning "eza theme source not found; skipping"
-        return 0
-    fi
-
-    local target_dir
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        # macOS default eza config directory
-        target_dir="$HOME/Library/Application Support/eza"
-    else
-        # Linux / XDG default
-        target_dir="$CONFIG_DIR/eza"
-    fi
-
-    create_symlink "$source_theme" "$target_dir/theme.yml"
-}
-
-install_glow_config() {
-    log "Installing glow configuration..."
-
-    local source_style="$DOTFILES_DIR/config/terminal/glow/rose-pine-dawn.json"
-    if [[ ! -f "$source_style" ]]; then
-        warning "Glow style source not found; skipping"
-        return 0
-    fi
-
-    # Always use XDG path for glow
-    local glow_dir="$CONFIG_DIR/glow"
-    mkdir -p "$glow_dir"
-    create_symlink "$source_style" "$glow_dir/rose-pine-dawn.json"
-
-    # Generate a machine-local glow.yml with absolute path.
-    # Avoid relying on env var expansion in YAML or shell templates.
-    local glow_yaml="$glow_dir/glow.yml"
-    {
-        echo "# Generated by kzh/dotfiles install on $(date)"
-        echo "style: \"$glow_dir/rose-pine-dawn.json\""
-        echo "pager: true"
-        echo "width: 0"
-    } > "$glow_yaml"
-    success "Glow default style set via $glow_yaml"
-}
-
-
-install_homebrew_packages() {
-    if [[ "$OSTYPE" == "darwin"* ]] && check_dependency "brew"; then
-        if confirm "Install Homebrew packages from Brewfile?"; then
-            log "Installing Homebrew packages..."
-            brew bundle --file="$DOTFILES_DIR/Brewfile"
-        fi
-    fi
-}
-
-setup_macos_defaults() {
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        if confirm "Configure macOS defaults?"; then
-            log "Configuring macOS defaults..."
-
-            defaults write com.apple.finder AppleShowAllFiles -bool true
-
-            defaults write com.apple.finder ShowPathbar -bool true
-
-            defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false
-
-            defaults write NSGlobalDomain KeyRepeat -int 2
-            defaults write NSGlobalDomain InitialKeyRepeat -int 15
-
-            defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking -bool true
-
-            mkdir -p "$HOME/Pictures/Screenshots"
-            defaults write com.apple.screencapture location -string "$HOME/Pictures/Screenshots"
-
-            killall Finder
-
-            success "macOS defaults configured"
-        fi
-    fi
-}
-
-main() {
-    parse_args "$@"
-    echo
-    echo "╔══════════════════════════════════════════════════════════════════════════╗"
-    echo "║                      Dotfiles Installation Started                        ║"
-    echo "╚══════════════════════════════════════════════════════════════════════════╝"
-    echo
-
-    log "Dotfiles directory: $DOTFILES_DIR"
-
-    if [[ ! -f "$DOTFILES_DIR/install" ]] || [[ ! -d "$DOTFILES_DIR/config" ]]; then
-        error "This script must be run from the dotfiles directory"
-        error "Expected files not found in: $DOTFILES_DIR"
+    [[ "$target" == "$HOME/"* ]] || { printf 'Target must be under HOME: %s\n' "$target" >&2; exit 1; }
+    parent="$(dirname "$target")"
+    while [[ ! -e "$parent" && ! -L "$parent" ]]; do
+        parent="$(dirname "$parent")"
+    done
+    parent="$(cd "$parent" && pwd -P)"
+    if [[ "$parent/" != "$home_dir/"* ]]; then
+        printf 'Refusing target through a directory outside HOME: %s\n' "$target" >&2
         exit 1
     fi
-
-    warning "This will create symlinks and potentially overwrite existing files"
-    if ! confirm "Do you want to continue?" "n"; then
-        log "Installation cancelled"
-        exit 0
+    mkdir -p "$(dirname "$target")"
+    if [[ -e "$target" || -L "$target" ]]; then
+        backup="$backup_dir/${target#"$HOME/"}"
+        mkdir -p "$(dirname "$backup")"
+        mv "$target" "$backup"
+        printf 'Backed up: %s\n' "$target"
     fi
-
-    install_dependencies
-
-    install_shell_config
-    install_terminal_config
-    install_editor_config
-    install_git_config
-    install_eza_theme
-    install_glow_config
-
-    install_homebrew_packages
-    setup_macos_defaults
-
-    echo
-    echo "╔══════════════════════════════════════════════════════════════════════════╗"
-    echo "║                      Installation Summary                                  ║"
-    echo "╚══════════════════════════════════════════════════════════════════════════╝"
-    echo
-
-    success "Dotfiles installation completed!"
-    echo
-
-    log "Installed configurations:"
-    success "  • ZSH configuration and completions"
-    success "  • Neovim configuration"
-    success "  • Tmux configuration"
-    success "  • Git configuration"
-    [[ -f "$HOME/Library/Application Support/com.mitchellh.ghostty/config" ]] && success "  • Ghostty terminal configuration"
-
-    if [[ -d "$BACKUP_DIR" ]]; then
-        echo
-        log "Backups saved to: $BACKUP_DIR"
-    fi
-
-    echo
-    log "Next steps:"
-    warning "  1. Restart your terminal or run: source ~/.zshrc"
-    warning "  2. Open tmux and press 'Ctrl-b + I' to install plugins"
-    warning "  3. Open Neovim and run :Lazy sync to install plugins"
-
-    if [[ "$SHELL" != "$(which zsh)" ]]; then
-        echo
-        warning "  4. Change default shell: chsh -s $(which zsh)"
-    fi
-
-    echo
-    success "Enjoy your new development environment! 🚀"
 }
 
-main "$@"
+install_file() {
+    local source="$repo_dir/$1" target="$2" mode="${3:-link}"
+    [[ -e "$source" ]] || { printf 'Missing source: %s\n' "$source" >&2; exit 1; }
+    case "$mode" in
+        link) [[ ! -L "$target" || "$(readlink "$target")" != "$source" ]] || return 0 ;;
+        copy)
+            if [[ -f "$target" && ! -L "$target" ]] && cmp -s "$source" "$target"; then
+                return 0
+            fi
+            ;;
+        template) [[ ! -e "$target" && ! -L "$target" ]] || return 0 ;;
+    esac
+    prepare_target "$target"
+    if [[ "$mode" == link ]]; then
+        ln -s "$source" "$target"
+    else
+        cp "$source" "$target"
+        [[ "$mode" != template ]] || chmod 600 "$target"
+    fi
+    printf 'Installed: %s\n' "$target"
+}
+
+# Copy entrypoints so third-party installers cannot append to tracked files.
+install_file home/.zshrc "$HOME/.zshrc" copy
+install_file home/.zprofile "$HOME/.zprofile" copy
+
+# Local overrides must live in a real directory outside the tracked module tree.
+if [[ -L "$config_dir/zsh" || ! -d "$config_dir/zsh" ]]; then
+    prepare_target "$config_dir/zsh"
+    mkdir -p "$config_dir/zsh"
+fi
+for file in zshrc zprofile aliases.zsh; do
+    install_file "modules/shell/zsh/$file" "$config_dir/zsh/$file"
+done
+install_file modules/shell/zsh/local.zsh.example "$config_dir/zsh/local.zsh" template
+
+install_file home/.tmux.conf "$HOME/.tmux.conf"
+install_file modules/terminal/tmux "$config_dir/tmux"
+install_file modules/terminal/ghostty/config "$HOME/Library/Application Support/com.mitchellh.ghostty/config.ghostty"
+install_file modules/editor/nvim "$config_dir/nvim"
+install_file modules/cli/uv/uv.toml "$config_dir/uv/uv.toml"
+install_file modules/cli/eza/theme.yml "$HOME/Library/Application Support/eza/theme.yml"
+install_file modules/git/gitconfig "$HOME/.gitconfig"
+install_file modules/git/gitignore_global "$HOME/.gitignore_global"
+install_file modules/git/gitconfig.local.example "$HOME/.gitconfig.local" template
+
+printf 'Configuration installed. Restart your terminal to load it.\n'
+[[ ! -d "$backup_dir" ]] || printf 'Backups: %s\n' "$backup_dir"
+printf 'Packages and plugins: just brew; just plugins\n'

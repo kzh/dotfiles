@@ -1,0 +1,23 @@
+# Machine-local Git identity and optional SSH signing.
+# Uncomment and edit the settings you use.
+#
+# [user]
+# 	name = Your Name
+# 	email = you@example.com
+# 	signingkey = /absolute/path/to/signing_key.pub
+#
+# [gpg]
+# 	format = ssh
+#
+# [commit]
+# 	gpgsign = true
+#
+# [tag]
+# 	gpgsign = true
+#
+# [gpg "ssh"]
+# 	allowedSignersFile = /absolute/path/to/allowed_signers
+# 	program = /absolute/path/to/git-ssh-sign
+# Repository-specific overrides also belong here:
+# [includeIf "gitdir:~/path/to/repository/"]
+# 	path = ~/.gitconfig-project

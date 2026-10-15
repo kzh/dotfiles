@@ -1,0 +1,19 @@
+# macOS metadata
+.DS_Store
+._*
+
+# Editor scratch files and per-user state
+*.swp
+*.swo
+.*.un~
+.netrwhist
+*~
+.history/
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/shelf/
+
+# Local environment files
+.env
+.env.local
+.env.*.local

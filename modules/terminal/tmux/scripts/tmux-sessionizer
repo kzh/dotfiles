@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Pick ~/Code/Repos/<host>/<owner>/<repo>, or use an explicit directory.
+if [[ $# -gt 0 ]]; then
+  dir="$(cd "$1" && pwd)"
+else
+  project_root="${PROJECT_ROOT:-$HOME/Code/Repos}"
+  projects="$(fd . "$project_root" --type d --hidden --min-depth 3 --max-depth 3 | sort)"
+  if [[ -z "$projects" ]]; then
+    printf 'No project directories found under %s\n' "$project_root" >&2
+    exit 1
+  fi
+  dir="$(printf '%s\n' "$projects" | fzf --height=70% --layout=reverse --border=rounded \
+    --prompt='Projects ❯ ' --preview='eza -la --icons --group-directories-first --color=always {}' \
+    --preview-window=right:60%:wrap:border-left)" || exit 1
+fi
+
+name="$(printf '%s' "$(basename "$dir")" | tr -c '[:alnum:]_-' '-' | tr -s '-')"
+name="${name:-session}"
+if ! tmux has-session -t "=$name" 2>/dev/null; then
+  tmux new-session -ds "$name" -c "$dir"
+fi
+if [[ -n "${TMUX:-}" ]]; then
+  tmux switch-client -t "=$name"
+else
+  tmux attach -t "=$name"
+fi
