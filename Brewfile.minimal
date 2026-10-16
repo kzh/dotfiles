@@ -1,0 +1,23 @@
+# Zsh uses the macOS-provided shell; Oh My Zsh is installed by `just plugins`.
+# Shell integrations and everyday CLI tools
+brew "atuin"
+brew "bat"
+brew "direnv"
+brew "eza"
+brew "fastfetch"
+brew "fd"
+brew "fzf"
+brew "jq"
+brew "ripgrep"
+brew "tree"
+brew "yq"
+brew "zoxide"
+
+# Terminal, editor, and setup dependencies
+brew "git"
+brew "just"
+brew "neovim"
+brew "tmux"
+
+# Icons used by eza and tmux; select this font in your terminal.
+cask "font-jetbrains-mono-nerd-font"

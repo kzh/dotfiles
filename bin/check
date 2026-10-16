@@ -12,6 +12,7 @@ for file in home/.zshrc home/.zprofile modules/shell/zsh/{zshrc,zprofile,*.zsh,*
     zsh -n "$file"
 done
 ruby -c Brewfile >/dev/null
+ruby -c Brewfile.minimal >/dev/null
 jq empty modules/editor/nvim/lazy-lock.json
 yq eval '.' modules/cli/eza/theme.yml >/dev/null
 uv --config-file modules/cli/uv/uv.toml cache dir >/dev/null

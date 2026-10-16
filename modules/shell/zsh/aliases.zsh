@@ -6,7 +6,6 @@ alias cfg='$EDITOR "$DOTFILES/modules/shell/zsh/zshrc"'
 alias ll='eza -la --icons --group-directories-first'
 alias la='eza -a --icons --group-directories-first'
 alias gs='git status -sb'
-alias lg=lazygit
 alias ta='tmux attach' tls='tmux ls' tn='tmux new -s'
 alias k=kubectl kctx=kubectx kns=kubens
 alias j=z

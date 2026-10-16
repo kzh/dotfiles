@@ -20,8 +20,9 @@ export PULUMI_SKIP_UPDATE_CHECK=true
 [[ -t 1 ]] && export GPG_TTY="$(tty)"
 
 typeset -U path PATH
-path=("$HOME/.local/bin" "${HOMEBREW_PREFIX:-/opt/homebrew}/bin" "${HOMEBREW_PREFIX:-/opt/homebrew}/sbin"
-  "$GOBIN" "$HOME/.cargo/bin" "$BUN_INSTALL/bin" $path)
+path=("$HOME/.local/bin" "$HOME/.cargo/bin" "${HOMEBREW_PREFIX:-/opt/homebrew}/opt/rustup/bin"
+  "${HOMEBREW_PREFIX:-/opt/homebrew}/bin" "${HOMEBREW_PREFIX:-/opt/homebrew}/sbin"
+  "$GOBIN" "$BUN_INSTALL/bin" $path)
 for bin_dir in "$HOME/Code/google-cloud-sdk/bin" "$HOME/.lmstudio/bin" \
   "$HOME/.codeium/windsurf/bin" /Applications/Obsidian.app/Contents/MacOS; do
   [[ -d "$bin_dir" ]] && path+=("$bin_dir")

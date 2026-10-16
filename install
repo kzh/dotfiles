@@ -2,12 +2,22 @@
 set -euo pipefail
 
 usage() {
-    printf 'Usage: ./install [-y|--yes] [-h|--help]\n'
+    cat <<'EOF'
+Usage: ./install [--minimal] [-y|--yes] [-h|--help]
+
+Install macOS dotfile configuration, backing up existing files.
+  --minimal  Install only Zsh, tmux, Neovim, Atuin defaults, and the eza theme.
+  -y, --yes  Skip the confirmation prompt.
+
+For minimal configuration, packages, and shell/tmux plugin setup: just minimal
+EOF
 }
 
 assume_yes=0
+minimal=0
 for arg in "$@"; do
     case "$arg" in
+        --minimal) minimal=1 ;;
         -y|--yes) assume_yes=1 ;;
         -h|--help) usage; exit 0 ;;
         *) printf 'Unknown option: %s\n' "$arg" >&2; usage >&2; exit 2 ;;
@@ -25,6 +35,7 @@ fi
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 home_dir="$(cd "$HOME" && pwd -P)"
 config_dir="${XDG_CONFIG_HOME:-$HOME/.config}"
+atuin_config_dir="${ATUIN_CONFIG_DIR:-$config_dir/atuin}"
 backup_dir="$HOME/.dotfiles_backup/$(date +%Y%m%d_%H%M%S)_$$"
 
 prepare_target() {
@@ -90,14 +101,22 @@ install_file modules/shell/zsh/local.zsh.example "$config_dir/zsh/local.zsh" tem
 
 install_file home/.tmux.conf "$HOME/.tmux.conf"
 install_file modules/terminal/tmux "$config_dir/tmux"
-install_file modules/terminal/ghostty/config "$HOME/Library/Application Support/com.mitchellh.ghostty/config.ghostty"
 install_file modules/editor/nvim "$config_dir/nvim"
-install_file modules/cli/uv/uv.toml "$config_dir/uv/uv.toml"
 install_file modules/cli/eza/theme.yml "$HOME/Library/Application Support/eza/theme.yml"
-install_file modules/git/gitconfig "$HOME/.gitconfig"
-install_file modules/git/gitignore_global "$HOME/.gitignore_global"
-install_file modules/git/gitconfig.local.example "$HOME/.gitconfig.local" template
+install_file modules/cli/atuin/config.toml "$atuin_config_dir/config.toml" template
+
+if [[ "$minimal" == 0 ]]; then
+    install_file modules/terminal/ghostty/config "$HOME/Library/Application Support/com.mitchellh.ghostty/config.ghostty"
+    install_file modules/cli/uv/uv.toml "$config_dir/uv/uv.toml"
+    install_file modules/git/gitconfig "$HOME/.gitconfig"
+    install_file modules/git/gitignore_global "$HOME/.gitignore_global"
+    install_file modules/git/gitconfig.local.example "$HOME/.gitconfig.local" template
+fi
 
 printf 'Configuration installed. Restart your terminal to load it.\n'
 [[ ! -d "$backup_dir" ]] || printf 'Backups: %s\n' "$backup_dir"
-printf 'Packages and plugins: just brew; just plugins\n'
+if [[ "$minimal" == 1 ]]; then
+    printf 'Packages and plugins: just brew-minimal; just plugins\n'
+else
+    printf 'Packages and plugins: just brew; just plugins\n'
+fi

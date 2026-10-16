@@ -1,0 +1,22 @@
+# Optional Rosé Pine Dawn theme; not enabled by the shell or installer.
+# Matches the fzf palette in modules/shell/zsh/zshrc.
+# Theme format: https://docs.atuin.sh/latest/guide/theming/
+[theme]
+name = "rose-pine-dawn"
+
+[colors]
+AlertInfo = "#56949f"
+AlertWarn = "#ea9d34"
+AlertError = "#b4637a"
+Annotation = "#9893a5"
+Base = "#575279"
+Guidance = "#797593"
+Important = "#d7827e"
+Title = "#286983"
+Muted = "#9893a5"
+SyntaxCommand = "#286983"
+SyntaxFlag = "#907aa9"
+SyntaxString = "#ea9d34"
+SyntaxVariable = "#d7827e"
+SyntaxOperator = "#56949f"
+SyntaxComment = "#9893a5"

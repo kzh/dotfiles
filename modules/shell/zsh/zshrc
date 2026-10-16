@@ -43,7 +43,12 @@ fi
 export FZF_DEFAULT_COMMAND='fd --type f --hidden --exclude .git'
 export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
 export FZF_ALT_C_COMMAND='fd --type d --hidden --exclude .git'
-export FZF_DEFAULT_OPTS='--height=60% --layout=reverse --border --color=light'
+# Rosé Pine Dawn, shared with the terminal and editor.
+export FZF_DEFAULT_OPTS='--height=60% --layout=reverse --border --color=light
+  --color=fg:#797593,fg+:#575279,bg:#faf4ed,bg+:#f2e9de
+  --color=hl:#d7827e,hl+:#d7827e,info:#56949f,marker:#b4637a
+  --color=prompt:#286983,spinner:#ea9d34,pointer:#907aa9,header:#907aa9
+  --color=border:#9893a5,gutter:#faf4ed'
 command -v fzf >/dev/null && eval "$(fzf --zsh)"
 command -v atuin >/dev/null && eval "$(atuin init zsh --disable-up-arrow)"
 command -v zoxide >/dev/null && eval "$(zoxide init zsh)"
